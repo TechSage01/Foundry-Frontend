@@ -1,4 +1,8 @@
 import logo from "../assets/icons/foundrylogo.png";
+import googleIcon from "../assets/icons/google.png";
+import githubIcon from "../assets/icons/github.png";
+import linkedinIcon from "../assets/icons/linkedin.png";
+import xIcon from "../assets/icons/x.png";
 
 function SignIn() {
   return (
@@ -11,10 +15,22 @@ function SignIn() {
           next.
         </p>
         <div className="social-buttons">
-          <button type="button">Continue with Google</button>
-          <button type="button">Continue with Github</button>
-          <button type="button">Continue with LinkedIn</button>
-          <button type="button">Continue with X</button>
+          <button type="button">
+            <img src={googleIcon} alt="" />
+            <span>Continue with Google</span>
+          </button>
+          <button type="button">
+            <img src={githubIcon} alt="" />
+            <span>Continue with Github</span>
+          </button>
+          <button type="button">
+            <img src={linkedinIcon} alt="" />
+            <span>Continue with LinkedIn</span>
+          </button>
+          <button type="button">
+            <img src={xIcon} alt="" />
+            <span>Continue with X</span>
+          </button>
         </div>
 
         <div className="divider">
@@ -26,18 +42,13 @@ function SignIn() {
 
           <input id="email" type="email" placeholder="you@example.com" />
 
-          <button type="submit">
-            Sign In
-          </button>
+          <button type="submit">Sign In / Create Account</button>
         </form>
 
-        <p className="signup-text">
-            Don't have an account?{' '}
-            <a href="/signup">Sign up</a>
-        </p>
-
+        
         <p className="terms">
-            By continuing, you agree to Foundry's Terms of Service and Privacy Policy.
+          By continuing, you agree to Foundry's Terms of Service and Privacy
+          Policy.
         </p>
       </div>
     </main>
