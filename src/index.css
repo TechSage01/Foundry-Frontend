@@ -9,6 +9,6 @@
   --surface: #f5f0eb;
 }
 body {
-  background-color: var(--background);
+  background-color: black;
   color: var(--text-primary);
 }
