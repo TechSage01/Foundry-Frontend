@@ -1,4 +1,4 @@
-import logo from "../assets/icons/foundrylogo.png";
+// import logo from "../assets/icons/foundrylogo.png";
 import googleIcon from "../assets/icons/google.png";
 import githubIcon from "../assets/icons/github.png";
 import linkedinIcon from "../assets/icons/linkedin.png";
