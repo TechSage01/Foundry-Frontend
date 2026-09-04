@@ -1,8 +1,8 @@
-import avatar from '../assets/profile/avatar.png'
-import cover from '../assets/profile/cover.jpg'
-import project1 from '../assets/profile/project-1.jpg'
-import project2 from '../assets/profile/project-2.jpg'
-import project3 from '../assets/profile/project-3.jpg'
+import avatar from '../assets/images/avatar.png'
+import cover from '../assets/images/cover.jpg'
+import project1 from '../assets/images/project-1.jpg'
+import project2 from '../assets/images/project-2.jpg'
+import project3 from '../assets/images/project-3.jpg'
 
 const profileData = {
     name: 'Alex Vance',
@@ -26,38 +26,71 @@ const profileData = {
         'Next.js',
         'Tailwind CSS',
         'Rust',
+        'Three.js',
+        'GraphQL',
+        'Node.js',
+        'Docker'
     ],
 
     journey: [
         {
+            period: '2023 — Present',
             role: 'Principal Design Technologist',
-            period: '2023 - Present'
+            description:
+                'Leading spatial computing interface research and component architecture.',
         },
         {
+            period: '2021 — 2023',
             role: 'Senior Frontend Engineer',
-            period: '2021 - 2023',
+            description:
+                'Developed core design system workflows used by over 10,000 active builders.',
         },
         {
-            role: 'Full Stack Developer',
             period: '2019 — 2021',
+            role: 'Full Stack Developer',
+            description:
+                'Built cloud-native microservices and high-throughput data visualization apps.',
         },
     ],
 
     projects: [
         {
             title: 'Nexus Design System',
-            description: 'Design system for modern web applications.',
+            description:
+                'Unified design tokens and modular UI components for rapid application prototyping.',
             image: project1,
+            version: 'Beta v0.9',
+            stats: {
+                stars: '1.2k',
+                forks: '340',
+                activeUsers: '4.5k',
+            },
         },
+
         {
-            title: 'Aether Spatial Engine', 
-            description: 'Tools for building spatial web experiences.',
+            title: 'Aether Spatial Engine',
+            description:
+                'Lightweight WebGL renderer for interactive graph-based visualization in the browser.',
             image: project2,
+            version: 'Beta v1.2',
+            stats: {
+                stars: '850',
+                forks: '125',
+                activeUsers: '2.1k',
+            },
         },
+
         {
-            title: 'ForgeCLI Toolchain', 
-            description: 'Developer tooling for faster workflows.',
-            image: project3, 
+            title: 'ForgeCLI Toolchain',
+            description:
+                'Blazing fast scaffolding utility for multi-tenant cloud applications written in Rust.',
+            image: project3,
+            version: 'Beta v0.4',
+            stats: {
+                stars: '2.4k',
+                forks: '410',
+                activeUsers: '6.8k',
+            },
         },
     ],
 
