@@ -40,18 +40,46 @@ const opportunitiesData = [
     title: 'ZK-Rollup Builder Grant Engine',
 
     description: 
-    'Build high-performance distributed systems scaling our core consensus layer. Looking for deep systems programming experience and a passion for infrastructure.',
+          'Non-dilutive funding for research teams and developers building privacy-preserving primitives and scaling solutions on modular infrastructure.',
 
-    compensationLabel: 'Compensation',
-    compensation: '$160k - $210k + Equity',
-    location: 'Remote (Global)',
+    compensationLabel: 'Grant Amount',
+    compensation: '$50,000 lump sum',
+    location: 'Remote (Anywhere)',
     deadlineLabel: 'Deadline',
-    deadline: 'In 4 days',
+    deadline: 'In 12 days',
 
     tags: [
-        'Rust',
-        'Distributed Systems',
-        'Full-time',
+        'Zero Knowledge',
+        'Cryptography',
+        'Research',
+    ],
+  },
+
+    {
+    id: 3,
+
+    company: "Kinetics AI",
+    companyMeta: "Seed Stage",
+    companyDescription: 'Autonomous',
+
+    type: "Grant",
+
+    filters: ["Remote", "Grants"],
+    title: 'ZK-Rollup Builder Grant Engine',
+
+    description: 
+          'Non-dilutive funding for research teams and developers building privacy-preserving primitives and scaling solutions on modular infrastructure.',
+
+    compensationLabel: 'Grant Amount',
+    compensation: '$50,000 lump sum',
+    location: 'Remote (Anywhere)',
+    deadlineLabel: 'Deadline',
+    deadline: 'In 12 days',
+
+    tags: [
+        'Zero Knowledge',
+        'Cryptography',
+        'Research',
     ],
   },
   
