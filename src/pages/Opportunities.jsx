@@ -80,19 +80,18 @@ function Opportunities() {
         </section>
 
         <div className="opportunities-controls">
-
           <div className="opportunity-filters">
             {categories.map((category) => (
               <button
                 key={category}
                 className={`opportunity-filter ${
-                  activeCategory === category ? 'active' : ''
+                  activeCategory === category ? "active" : ""
                 }`}
                 onClick={() => setActiveCategory(category)}
               >
                 <span>{category}</span>
 
-                {category === 'All Opportunities' && (
+                {category === "All Opportunities" && (
                   <span className="filter-count">
                     {opportunitiesData.length}
                   </span>
@@ -101,96 +100,97 @@ function Opportunities() {
             ))}
           </div>
 
-        <div className="opportunities-sort">
-            <button className="sort-button-active">
-              Latest
-            </button>
-            <button className="sort-button">
-              Highest Comp
-            </button>
-            <button className="sort-button">
-              Closing Soon
-            </button>
+          <div className="opportunities-sort">
+            <button className="sort-button-active">Latest</button>
+            <button className="sort-button">Highest Comp</button>
+            <button className="sort-button">Closing Soon</button>
+          </div>
         </div>
-      </div>
-      <section className="opportunity-grid">
-        {filteredOpportunities.map((opportunity) => (
-          <article
-            className="opportunity-card"
-            key={opportunity.id}
-          >
-            <div className="opportunity-company">
-              <div className="company-logo">
-                <BriefcaseBusiness size={20} />
-              </div>
-              <div className="company-info">
-                <div className="company-name">
-                  <strong>{opportunity.company}</strong>
-                  <span>
-                     • {opportunity.companyMeta}
-                  </span>
+        <section className="opportunity-grid">
+          {filteredOpportunities.map((opportunity) => (
+            <article className="opportunity-card" key={opportunity.id}>
+              <div className="opportunity-company">
+                <div className="company-logo">
+                  <BriefcaseBusiness size={20} />
                 </div>
-                <p>
-                  {opportunity.companyDescription}
-                </p>
-              </div>
-              <div className="opportunity-card-actions">
-                <span className="opportunity-type">
-                  {opportunity.type}
-                </span>
-                <button
-                  className="bookmark-button"
-                  aria-label={`Save ${opportunity.title}`}
+                <div className="company-info">
+                  <div className="company-name">
+                    <strong>{opportunity.company}</strong>
+                    <span>• {opportunity.companyMeta}</span>
+                  </div>
+                  <p>{opportunity.companyDescription}</p>
+                </div>
+                <div className="opportunity-card-actions">
+                  <span className="opportunity-type">{opportunity.type}</span>
+                  <button
+                    className="bookmark-button"
+                    aria-label={`Save ${opportunity.title}`}
                   >
                     <Bookmark size={17} />
+                  </button>
+                </div>
+              </div>
+              <div className="opportunity-main">
+                <h2>{opportunity.title}</h2>
+                <p>{opportunity.description}</p>
+              </div>
+
+              <div className="opportunity-details">
+                <div>
+                  <span>{opportunity.reward.label}</span>
+                  <strong>{opportunity.reward.value}</strong>
+                </div>
+                <div>
+                  <span>Location</span>
+                  <strong>
+                    <MapPin size={14} />
+                    {opportunity.location}
+                  </strong>
+                </div>
+                <div>
+                  <span>{opportunity.deadline.label}</span>
+                  <strong className="deadline">
+                    <CalendarDays size={14} />
+                    {opportunity.deadline.value}
+                  </strong>
+                </div>
+              </div>
+              <div className="opportunity-tags">
+                {opportunity.tags.map((tag) => (
+                  <span key={tag}>{tag}</span>
+                ))}
+              </div>
+              <div className="opportunity-actions">
+                <button className="quick-apply-button">
+                  <Zap size={16} />
+                  Quick Apply
+                </button>
+                <button className="profile-apply-button">
+                  <UserRound size={16} />
+                  Apply with Profile
                 </button>
               </div>
-            </div>
-            <div className="opportunity-main"> 
-              <h2>
-                {opportunity.title}
-              </h2>
-              <p>
-                {opportunity.description}
-              </p>
-            </div>
+            </article>
+          ))}
+        </section>
+        {filteredOpportunities.length === 0 && (
+          <div className="opportunities-empty">
+            <BriefcaseBusiness size={28} />
+            <h2>No opportunities found</h2>
+            <p>Try another search or choose a different category</p>
+          </div>
+        )}
 
-            <div className="opportunity-details">
-              <div>
-                <span>
-                  {opportunity.reward.label}
-                </span>
-                <strong>
-                  {opportunity.reward.value}
-                </strong>
-              </div>
-              <div>
-                <span>
-                  Location
-                </span>
-                <strong>
-                  <MapPin size={14} />
-                  {opportunity.location}
-                </strong>
-              </div>
-              <div>
-                <span>
-                  {opportunity.deadline.label}
-                </span>
-                <strong className="deadline">
-                  <CalendarDays size={14} />
-                </strong>
-              </div>
-            </div>
-             
-            
-
-          </article>
-
-        ) )}
-      </section>
+        {filteredOpportunities.length > 0 && (
+          <div className="load-more-wrapper">
+            <button className="load-more-button">
+              Load More Opportunities
+              <ChevronDown size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </MainLayout>
-  )
+  );
 }
-export default Opportunities
+export default Opportunities;
