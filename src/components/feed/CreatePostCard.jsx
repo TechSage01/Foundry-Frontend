@@ -45,3 +45,16 @@ const CreatePostCard = () => {
 };
 
 export default CreatePostCard;
+
+// <div className="flex items-center justify-between gap-2 w-full">
+                    //     <input type="text"
+                    //         value={content}
+                    //         disabled={isSubmitting}
+                    //         onChange={(e) => setContent(e.target.value)}
+                    //         placeholder="Share a milestone, metric or what you are building today..."
+                    //         className="w-full bg-transparent text-sm text-[#2D2D2D] placeholder-[#737373] focus:outline-none cursor-pointer disabled:opacity-50"
+                    //         onKeyDown={(e) => e.key === 'Enter'&& handleSubmit(e)}
+                    //     />
+                    //     <PenSquare className="w-4 h-4 text-[#737373] shrink-0 ml-2" />
+                    //     {/* <Edit3 className="w-4 h-4 text-[#737373] shrink-0 ml-2"/> */}
+                    // </div>
