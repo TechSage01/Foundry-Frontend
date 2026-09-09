@@ -14,6 +14,7 @@ const opportunitiesData = [
     reward: {
       label: 'Compensation',
       value: '$160k - $210k + Equity',
+      amount: 210000,
     },
 
     location: 'Remote (Global)',
@@ -21,7 +22,10 @@ const opportunitiesData = [
     deadline: {
       label: 'Deadline',
       value: 'In 4 days',
+      daysRemaining: 4,
     },
+
+    createdAt: '2026-09-05',
 
     tags: ['Rust', 'Distributed Systems', 'Full-time'],
   },
@@ -41,6 +45,7 @@ const opportunitiesData = [
     reward: {
       label: 'Grant Amount',
       value: '$50,000 lump sum',
+      amount: 50000,
     },
 
     location: 'Remote (Anywhere)',
@@ -48,7 +53,10 @@ const opportunitiesData = [
     deadline: {
       label: 'Deadline',
       value: 'In 12 days',
+      daysRemaining: 12,
     },
+
+    createdAt: '2026-09-03',
 
     tags: ['Zero Knowledge', 'Cryptography', 'Research'],
   },
@@ -68,6 +76,7 @@ const opportunitiesData = [
     reward: {
       label: 'Equity',
       value: '25% - 40%',
+      amount: 400000,
     },
 
     location: 'San Francisco / Hybrid',
@@ -75,7 +84,10 @@ const opportunitiesData = [
     deadline: {
       label: 'Deadline',
       value: 'Rolling',
+      daysRemaining: 999,
     },
+
+    createdAt: '2026-09-01',
 
     tags: ['AI / ML', 'Python', 'Founding Team'],
   },
@@ -95,6 +107,7 @@ const opportunitiesData = [
     reward: {
       label: 'Total Prizes',
       value: '$100,000 Pool',
+      amount: 100000,
     },
 
     location: 'Online / Global',
@@ -102,7 +115,10 @@ const opportunitiesData = [
     deadline: {
       label: 'Starts In',
       value: '8 days',
+      daysRemaining: 8,
     },
+
+    createdAt: '2026-08-30',
 
     tags: ['Hackathon', 'AI Agents', 'Prizes'],
   },
@@ -122,6 +138,7 @@ const opportunitiesData = [
     reward: {
       label: 'Compensation',
       value: '$180k - $230k',
+      amount: 230000,
     },
 
     location: 'New York / Remote',
@@ -129,7 +146,10 @@ const opportunitiesData = [
     deadline: {
       label: 'Deadline',
       value: 'In 15 days',
+      daysRemaining: 15,
     },
+
+    createdAt: '2026-08-28',
 
     tags: ['TypeScript', 'Tailwind', 'Design Systems'],
   },
@@ -149,6 +169,7 @@ const opportunitiesData = [
     reward: {
       label: 'Compensation',
       value: '$130k - $160k + Equity',
+      amount: 160000,
     },
 
     location: 'Remote (US/EU)',
@@ -156,7 +177,10 @@ const opportunitiesData = [
     deadline: {
       label: 'Deadline',
       value: 'In 3 days',
+      daysRemaining: 3,
     },
+
+    createdAt: '2026-09-06',
 
     tags: ['DevRel', 'Technical Writing', 'Cloud'],
   },
