@@ -32,7 +32,7 @@ import {
 function CreateOpportunity() {
   const navigate = useNavigate();
 
-  const OpportunityTypes = [
+  const opportunityTypes = [
     {
       name: 'Full-time Job',
       icon: BriefcaseBusiness,
@@ -377,9 +377,570 @@ function CreateOpportunity() {
                     <label htmlFor="hiring-team">
                       Hiring Team / Pod
                     </label>
+                    <div className="select-field">
+
+                    <select
+                      id="hiring-team"
+                      value={hiringTeam}
+                      onChange={(event) =>
+                        setHiringTeam(
+                          event.target.value
+                        )
+                      }
+                    >
+                                            <option>
+                        Graphics Runtime & Shaders Pod
+                      </option>
+
+                      <option>
+                        Core Engineering
+                      </option>
+
+                      <option>
+                        Product Engineering
+                      </option>
+
+                      <option>
+                        Design Systems
+                      </option>
+
+                    </select>
+                    <ChevronDown size={14} />
+
+                    </div>
                   </div>
                 </div>
+                <p className="form-helper-text">
+                  Displays project milestones & ccodebase badges on the card
+                </p>
               </section>
+               <section className="form-section">
+
+              <div className="form-section-heading">
+
+                <div className="section-heading-left">
+
+                  <span className="section-number">
+                    2
+                  </span>
+
+                  <div>
+
+                    <h2>
+                      Details, Scope & Compensation
+                    </h2>
+
+                    <p>
+                      Clear technical specifications
+                      yield 3.4x higher response rates
+                    </p>
+
+                  </div>
+
+                </div>
+
+
+                <span className="section-required">
+                  Required
+                </span>
+
+              </div>
+
+
+              <div className="form-field">
+
+                <label htmlFor="overview">
+                  Role Overview & What You'll Build
+                </label>
+
+
+                <div className="rich-text-editor">
+
+                  <div className="editor-toolbar">
+
+                    <button
+                      type="button"
+                      aria-label="Bold"
+                    >
+                      <strong>
+                        B
+                      </strong>
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-label="Italic"
+                    >
+                      <em>
+                        I
+                      </em>
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-label="List"
+                    >
+                      <List size={14} />
+                    </button>
+
+                  </div>
+
+
+                  <textarea
+                    id="overview"
+                    rows={5}
+                    maxLength={1000}
+                    value={overview}
+                    onChange={(event) =>
+                      setOverview(
+                        event.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+              </div>
+
+
+              <div className="form-field">
+
+                <label htmlFor="skills">
+                  Required Skills & Stack
+                </label>
+
+
+                <div className="skills-field">
+
+                  <div className="selected-skills">
+
+                    {skills.map((skill) => (
+
+                      <span
+                        className="selected-skill"
+                        key={skill}
+                      >
+
+                        {skill}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeSkill(skill)
+                          }
+                          aria-label={`Remove ${skill}`}
+                        >
+                          <X size={11} />
+                        </button>
+
+                      </span>
+
+                    ))}
+
+
+                    <input
+                      id="skills"
+                      type="text"
+                      placeholder="+ Add skill tag"
+                      value={skillInput}
+                      onChange={(event) =>
+                        setSkillInput(
+                          event.target.value
+                        )
+                      }
+                      onKeyDown={
+                        handleSkillKeyDown
+                      }
+                    />
+
+                  </div>
+
+                </div>
+
+
+                <div className="suggested-skills">
+
+                  <span>
+                    Suggested:
+                  </span>
+
+                  {suggestedSkills.map(
+                    (skill) => (
+
+                      <button
+                        type="button"
+                        key={skill}
+                        onClick={() =>
+                          addSuggestedSkill(
+                            skill
+                          )
+                        }
+                      >
+                        + {skill}
+                      </button>
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+              <div className="form-two-columns">
+
+                <div className="form-field">
+
+                  <label>
+                    Work Arrangement
+                  </label>
+
+
+                  <div className="segmented-control">
+
+                    {[
+                      'Remote',
+                      'Hybrid',
+                      'On-site',
+                    ].map((option) => (
+
+                      <button
+                        type="button"
+                        key={option}
+                        className={
+                          workArrangement ===
+                          option
+                            ? 'active'
+                            : ''
+                        }
+                        onClick={() =>
+                          setWorkArrangement(
+                            option
+                          )
+                        }
+                      >
+                        {option}
+                      </button>
+
+                    ))}
+
+                  </div>
+
+                </div>
+
+
+                <div className="form-field">
+
+                  <label htmlFor="location">
+                    Location / Timezone Range
+                  </label>
+
+
+                  <div className="input-with-icon">
+
+                    <Globe2 size={14} />
+
+                    <input
+                      id="location"
+                      type="text"
+                      value={location}
+                      onChange={(event) =>
+                        setLocation(
+                          event.target.value
+                        )
+                      }
+                    />
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div className="compensation-card">
+
+                <div className="compensation-heading">
+
+                  <div>
+
+                    <div className="compensation-title">
+
+                      <CircleDollarSign
+                        size={15}
+                      />
+
+                      <span>
+                        Compensation Structure
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <span>
+                    Pay transparency required
+                    by community charter
+                  </span>
+
+                </div>
+
+
+                <div className="compensation-fields">
+
+
+                  <div className="form-field">
+
+                    <label>
+                      Currency
+                    </label>
+
+                    <div className="select-field">
+
+                      <select
+                        value={currency}
+                        onChange={(event) =>
+                          setCurrency(
+                            event.target.value
+                          )
+                        }
+                      >
+
+                        <option>
+                          USD ($)
+                        </option>
+
+                        <option>
+                          EUR (€)
+                        </option>
+
+                        <option>
+                          GBP (£)
+                        </option>
+
+                        <option>
+                          NGN (₦)
+                        </option>
+
+                      </select>
+
+                      <ChevronDown
+                        size={13}
+                      />
+
+                    </div>
+
+                  </div>
+
+                  <div className="form-field">
+
+                    <label>
+                      Min Pay / Rate
+                    </label>
+
+                    <input
+                      type="text"
+                      value={minPay}
+                      onChange={(event) =>
+                        setMinPay(
+                          event.target.value
+                        )
+                      }
+                    />
+
+                  </div>
+
+                  <div className="form-field">
+
+                    <label>
+                      Max Pay / Rate
+                    </label>
+
+                    <div className="pay-input">
+
+                      <input
+                        type="text"
+                        value={maxPay}
+                        onChange={(event) =>
+                          setMaxPay(
+                            event.target.value
+                          )
+                        }
+                      />
+
+                      <span>
+                        / {payPeriod}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                <div className="compensation-options">
+
+                  <label>
+
+                    <input
+                      type="checkbox"
+                      checked={includesEquity}
+                      onChange={(event) =>
+                        setIncludesEquity(
+                          event.target.checked
+                        )
+                      }
+                    />
+
+                    <span>
+                      Includes Equity
+                      (0.25% - 0.75%)
+                    </span>
+
+                  </label>
+
+
+                  <label>
+
+                    <input
+                      type="checkbox"
+                      checked={tokenGrant}
+                      onChange={(event) =>
+                        setTokenGrant(
+                          event.target.checked
+                        )
+                      }
+                    />
+
+                    <span>
+                      Token Grant /
+                      Incentive Pool
+                    </span>
+
+                  </label>
+
+                </div>
+
+              </div>
+
+              <div className="form-two-columns">
+
+                <div className="form-field">
+
+                  <label htmlFor="deadline">
+                    Application Deadline
+                  </label>
+
+
+                  <div className="input-with-icon">
+
+                    <CalendarDays
+                      size={14}
+                    />
+
+                    <input
+                      id="deadline"
+                      type="date"
+                      value={deadline}
+                      onChange={(event) =>
+                        setDeadline(
+                          event.target.value
+                        )
+                      }
+                    />
+
+                  </div>
+
+                </div>
+
+
+                <div className="form-field">
+
+                  <label htmlFor="start-window">
+                    Target Start Window
+                  </label>
+
+
+                  <div className="select-field">
+
+                    <select
+                      id="start-window"
+                      value={startWindow}
+                      onChange={(event) =>
+                        setStartWindow(
+                          event.target.value
+                        )
+                      }
+                    >
+
+                      <option>
+                        Immediately
+                      </option>
+
+                      <option>
+                        Within 14 days
+                      </option>
+
+                      <option>
+                        Within 30 days
+                      </option>
+
+                      <option>
+                        Within 60 days
+                      </option>
+
+                      <option>
+                        Flexible
+                      </option>
+
+                    </select>
+
+                    <ChevronDown size={14} />
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </section>
+            <section className="form-section">
+              <div className="form-section-heading">
+                <div className="section-heading-left">
+                  <span className="section-number">
+                    3
+                  </span>
+                  <div>
+                    <h2>
+                      Application & Screening Protocol
+                    </h2>
+                     <p>
+                      Streamlined submissions powered
+                      by verified builder profiles
+                    </p>
+                  </div>
+                  </div>
+                  <span className="section-required configurable">
+                    Configurable
+                  </span>
+                  </div>
+
+                  <div className="fast-apply-card">
+                    <div className="fast-apply-icon">
+                      <Zap size={18} />
+                    </div>
+                    <div className="fast-apply-content">
+                      <h3>
+                        Foundry Fast Apply
+                      </h3>
+                    </div>
+                  </div>
+               
+              </section>
+
+            
+
               
             </div>
           </div>
