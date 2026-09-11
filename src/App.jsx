@@ -10,6 +10,8 @@ import VerifyOtp from './pages/VerifyOtp.jsx';
 import LandingPage from './pages/LandingPage.jsx'
 import ProtectedRoutes from './components/ProtectedRoutes.jsx';
 import ManifestoPage from './pages/ManifestoPage.jsx'
+import Opportunities from './pages/Opportunities';
+
 export default function App() {
   const [selectedTopic, setSelectedTopic] = React.useState(null);
   return (
@@ -40,8 +42,8 @@ export default function App() {
 
         <Route path="/profile" 
         element={<Profile />} />
+        <Route path="/opportunities" element={<Opportunities />} />
        </Route>
-        
       </Routes>
     </Router>
   );
