@@ -31,7 +31,6 @@ import {
 
 function CreateOpportunity() {
   const navigate = useNavigate();
-
   const opportunityTypes = [
     {
       name: "Full-time Job",
@@ -60,16 +59,19 @@ function CreateOpportunity() {
   ];
 
   const [opportunityType, setOpportunityType] = useState("Full-time Job");
+
   const [title, setTitle] = useState("Senior Rust & WebGPU Graphics Engineer");
+
   const [linkedProject, setLinkedProject] = useState(
     "Aether Spatial Engine (Active)",
   );
+
   const [hiringTeam, setHiringTeam] = useState(
     "Graphics Runtime & Shaders Pod",
   );
 
   const [overview, setOverview] = useState(
-    "We're building the next-generation low latency rendering pipeline for decntralized spatial simulations. You will design new WebGPU shader graph, optimize compute shaders in WGSL, and interface directly with our Rust-based deterministic physics engine. Candidates should be comfortable profiling memory bottlenecks in native WASM runtimes.",
+    "We're building the next-generation low-latency rendering pipeline for decentralized spatial simulations. You will design new WebGPU shader graph, optimize compute shaders in WGSL, and interface directly with our Rust-based deterministic physics engine. Candidates should be comfortable profiling memory bottlenecks in native WASM runtimes.",
   );
 
   const [skills, setSkills] = useState([
@@ -78,36 +80,49 @@ function CreateOpportunity() {
     "WASM",
     "Computer Graphics",
   ]);
-  const suggestedSkills = ["Typescript", "Distributed Systems", "GLSL"];
+
+  const suggestedSkills = ["TypeScript", "Distributed Systems", "GLSL"];
 
   const [skillInput, setSkillInput] = useState("");
+
   const [workArrangement, setWorkArrangement] = useState("Remote");
 
   const [location, setLocation] = useState("Global Remote (UTC-8 to UTC)");
 
   const [currency, setCurrency] = useState("USD ($)");
+
   const [minPay, setMinPay] = useState("160,000");
+
   const [maxPay, setMaxPay] = useState("210,000");
+
   const [payPeriod, setPayPeriod] = useState("yr");
+
   const [includesEquity, setIncludesEquity] = useState(true);
+
   const [tokenGrant, setTokenGrant] = useState(false);
+
   const [deadline, setDeadline] = useState("2025-04-30");
+
   const [startWindow, setStartWindow] = useState("Within 30 days");
   const [fastApply, setFastApply] = useState(true);
+
   const [applicationUrl, setApplicationUrl] = useState(
     "https://jobs.lever.co/aether-engine/senior-graphics-engineer",
   );
 
   const [screeningQuestion, setScreeningQuestion] = useState(
-    "Share a link to a WebGPU shader or Rust crate you authored, along with the toughest GPU memory profiling challegnge you solved.",
+    "Share a link to a WebGPU shader or Rust crate you authored, along with the toughest GPU memory profiling challenge you solved.",
   );
 
   const [isSaved, setIsSaved] = useState(false);
+
   const handleSkillKeyDown = (event) => {
     if (event.key !== "Enter") return;
 
     event.preventDefault();
+
     const newSkill = skillInput.trim();
+
     if (!newSkill) return;
 
     if (!skills.includes(newSkill)) {
@@ -161,546 +176,724 @@ function CreateOpportunity() {
       applicationUrl,
       screeningQuestion,
     };
+
     console.log("Opportunity ready to publish:", opportunity);
+  };
 
-    const previewTitle = title || "Senior Rust & WebGPU Graphics Engineer";
-    const previewDescription =
-      overview || "Your opportunity description will appear here.";
+  const previewTitle = title || "Senior Rust & WebGPU Graphics Engineer";
 
-    const previewLocation = location || "Global Remote";
+  const previewDescription =
+    overview || "Your opportunity description will appear here.";
 
-    const previewCompensation = `${currency} ${minPay} - ${maxPay} / ${payPeriod}`;
+  const previewLocation = location || "Global Remote";
 
-    return (
-      <MainLayout>
-        <form className="create-opportunity-page" onSubmit={handlePublish}>
-          <div className="create-opportunity-topbar">
+  const previewCompensation = `${currency} ${minPay} - ${maxPay} / ${payPeriod}`;
+
+  return (
+    <MainLayout>
+      <form className="create-opportunity-page" onSubmit={handlePublish}>
+        <div className="create-opportunity-topbar">
+          <button
+            type="button"
+            className="opportunity-breadcrumb"
+            onClick={() => navigate("/opportunities")}
+          >
+            <ArrowLeft size={14} />
+
+            <span>Opportunities</span>
+
+            <span className="breadcrumb-divider">/</span>
+
+            <strong>Post a New Opportunity</strong>
+          </button>
+
+          <div className="topbar-actions">
+            <span className="autosave-status">
+              <span className="autosave-dot" />
+
+              {isSaved ? "Saved to drafts" : "Autosaved to drafts (10:42 AM)"}
+            </span>
+
             <button
               type="button"
-              className="opportunity-breadcrumb"
+              className="discard-button"
               onClick={() => navigate("/opportunities")}
             >
-              <ArrowLeft size={14} />
-              <span>Opportunities</span>
-              <span className="breadcrumb-divider">/</span>
-              <strong>Post a New Opportunity</strong>
+              Discard
             </button>
-
-            <div className="topbar-actions">
-              <span className="autosave-status">
-                <span className="autosave-dot" />
-                {isSaved ? "Saved to drafts" : "Autosaved to drafts (10:42 AM)"}
-              </span>
-              <button
-                type="button"
-                className="discard-button"
-                onClick={() => navigate("/opportunities")}
-              >
-                Discard
-              </button>
-            </div>
           </div>
-          <section className="create-opportunity-hero">
-            <div className="hero-content">
-              <span className="builder-network-badge">
-                <Sparkles size={12} />
-                Foundry Builder Network Reach · 42,000+ Engineers & Founders
-              </span>
-              <h1>Create & Publish an Opportunity</h1>
-              <p>
-                Connect with verified builders, open-source contributors,
-                technical co-founders, and specialized creators across the
-                Foundry ecosystem.
+        </div>
+
+        <section className="create-opportunity-hero">
+          <div className="hero-content">
+            <span className="builder-network-badge">
+              <Sparkles size={12} />
+              Foundry Builder Network Reach · 42,000+ Engineers & Founders
+            </span>
+
+            <h1>Create & Publish an Opportunity</h1>
+
+            <p>
+              Connect with verified builders, open-source contributors,
+              technical co-founders, and specialized creators across the Foundry
+              ecosystem.
+            </p>
+          </div>
+
+          <div className="hero-art">
+            <HeartHandshake size={92} />
+          </div>
+        </section>
+
+        <div className="create-opportunity-content">
+          <div className="opportunity-form">
+            <section className="form-section">
+              <div className="form-section-heading">
+                <div className="section-heading-left">
+                  <span className="section-number">1</span>
+
+                  <div>
+                    <h2>Opportunity Type & Basics</h2>
+
+                    <p>
+                      Classify the opening to reach the right candidate feeds
+                    </p>
+                  </div>
+                </div>
+
+                <span className="section-required">Required</span>
+              </div>
+
+              <div className="form-field">
+                <label>Category</label>
+
+                <div className="opportunity-type-grid">
+                  {opportunityTypes.map((type) => {
+                    const Icon = type.icon;
+
+                    return (
+                      <button
+                        type="button"
+                        key={type.name}
+                        className={`opportunity-type-button ${
+                          opportunityType === type.name ? "active" : ""
+                        }`}
+                        onClick={() => setOpportunityType(type.name)}
+                      >
+                        <Icon size={15} />
+
+                        <span>{type.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="form-field">
+                <div className="field-label-row">
+                  <label htmlFor="opportunity-title">Opportunity Title</label>
+
+                  <span className="character-count">{title.length} / 100</span>
+                </div>
+
+                <input
+                  id="opportunity-title"
+                  type="text"
+                  maxLength={100}
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                />
+              </div>
+
+              <div className="form-two-columns">
+                <div className="form-field">
+                  <label htmlFor="linked-project">Linked Foundry Project</label>
+
+                  <div className="select-field">
+                    <select
+                      id="linked-project"
+                      value={linkedProject}
+                      onChange={(event) => setLinkedProject(event.target.value)}
+                    >
+                      <option>Aether Spatial Engine (Active)</option>
+
+                      <option>Nexus Design System</option>
+
+                      <option>ForgeCLI Toolchain</option>
+
+                      <option>No linked project</option>
+                    </select>
+
+                    <ChevronDown size={14} />
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="hiring-team">Hiring Team / Pod</label>
+
+                  <div className="select-field">
+                    <select
+                      id="hiring-team"
+                      value={hiringTeam}
+                      onChange={(event) => setHiringTeam(event.target.value)}
+                    >
+                      <option>Graphics Runtime & Shaders Pod</option>
+
+                      <option>Core Engineering</option>
+
+                      <option>Product Engineering</option>
+
+                      <option>Design Systems</option>
+                    </select>
+
+                    <ChevronDown size={14} />
+                  </div>
+                </div>
+              </div>
+
+              <p className="form-helper-text">
+                Displays project milestones & codebase badges on the card
               </p>
-            </div>
-            <div className="hero-art">
-              <HeartHandshake size={92} />
-            </div>
-          </section>
+            </section>
 
-          <div className="create-opportunity-content">
-            <div className="opportunity-form">
-              <section className="form-section">
-                <div className="form-section-heading">
-                  <div className="section-heading-left">
-                    <span className="section-number">1</span>
-                    <div>
-                      <h2>Opportunity Type & Basics</h2>
-                      <p>
-                        Classify the opening to reach the right candidate feeds
-                      </p>
-                    </div>
-                  </div>
-                  <span className="section-required">Required</span>
-                </div>
-                <div className="form-field">
-                  <label>Category</label>
-                  <div className="opportunity-type-grid">
-                    {opportunityTypes.map((type) => {
-                      const Icon = type.icon;
+            <section className="form-section">
+              <div className="form-section-heading">
+                <div className="section-heading-left">
+                  <span className="section-number">2</span>
 
-                      return (
-                        <button
-                          type="button"
-                          key={type.name}
-                          className={`opportunity-type-button ${
-                            opportunityType === type.name ? "active" : ""
-                          }`}
-                          onClick={() => setOpportunityType(type.name)}
-                        >
-                          <Icon size={15} />
+                  <div>
+                    <h2>Details, Scope & Compensation</h2>
 
-                          <span>{type.name}</span>
-                        </button>
-                      );
-                    })}
+                    <p>
+                      Clear technical specifications yield 3.4x higher response
+                      rates
+                    </p>
                   </div>
                 </div>
-                <div className="form-field">
-                  <div className="field-label-row">
-                    <label htmlFor="opportunity-title">Opportunity Title</label>
-                    <span className="character-count">
-                      {title.length} / 100
-                    </span>
+
+                <span className="section-required">Required</span>
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="overview">
+                  Role Overview & What You'll Build
+                </label>
+
+                <div className="rich-text-editor">
+                  <div className="editor-toolbar">
+                    <button type="button" aria-label="Bold">
+                      <strong>B</strong>
+                    </button>
+
+                    <button type="button" aria-label="Italic">
+                      <em>I</em>
+                    </button>
+
+                    <button type="button" aria-label="List">
+                      <List size={14} />
+                    </button>
                   </div>
 
-                  <input
-                    id="opportunity-title"
-                    type="text"
-                    maxLength={100}
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
+                  <textarea
+                    id="overview"
+                    rows={5}
+                    maxLength={1000}
+                    value={overview}
+                    onChange={(event) => setOverview(event.target.value)}
                   />
                 </div>
+              </div>
 
-                <div className="form-two-columns">
-                  <div className="form-field">
-                    <label htmlFor="linked-project">
-                      Linked Foundry Project
-                    </label>
-                    <div className="select-field">
-                      <select
-                        id="linked-project"
-                        value={linkedProject}
-                        onChange={(event) =>
-                          setLinkedProject(event.target.value)
-                        }
-                      >
-                        <option>Aether Spatial Engine</option>
-                        <option>Nexus Design System</option>
-                        <option>ForgeCLI Toolchain</option>
-                        <option>No linked project</option>
-                      </select>
-                      <ChevronDown size={14} />
-                    </div>
-                  </div>
-                  <div className="form-field">
-                    <label htmlFor="hiring-team">Hiring Team / Pod</label>
-                    <div className="select-field">
-                      <select
-                        id="hiring-team"
-                        value={hiringTeam}
-                        onChange={(event) => setHiringTeam(event.target.value)}
-                      >
-                        <option>Graphics Runtime & Shaders Pod</option>
+              <div className="form-field">
+                <label htmlFor="skills">Required Skills & Stack</label>
 
-                        <option>Core Engineering</option>
+                <div className="skills-field">
+                  <div className="selected-skills">
+                    {skills.map((skill) => (
+                      <span className="selected-skill" key={skill}>
+                        {skill}
 
-                        <option>Product Engineering</option>
+                        <button
+                          type="button"
+                          onClick={() => removeSkill(skill)}
+                          aria-label={`Remove ${skill}`}
+                        >
+                          <X size={11} />
+                        </button>
+                      </span>
+                    ))}
 
-                        <option>Design Systems</option>
-                      </select>
-                      <ChevronDown size={14} />
-                    </div>
-                  </div>
-                </div>
-                <p className="form-helper-text">
-                  Displays project milestones & ccodebase badges on the card
-                </p>
-              </section>
-              <section className="form-section">
-                <div className="form-section-heading">
-                  <div className="section-heading-left">
-                    <span className="section-number">2</span>
-
-                    <div>
-                      <h2>Details, Scope & Compensation</h2>
-
-                      <p>
-                        Clear technical specifications yield 3.4x higher
-                        response rates
-                      </p>
-                    </div>
-                  </div>
-
-                  <span className="section-required">Required</span>
-                </div>
-
-                <div className="form-field">
-                  <label htmlFor="overview">
-                    Role Overview & What You'll Build
-                  </label>
-
-                  <div className="rich-text-editor">
-                    <div className="editor-toolbar">
-                      <button type="button" aria-label="Bold">
-                        <strong>B</strong>
-                      </button>
-
-                      <button type="button" aria-label="Italic">
-                        <em>I</em>
-                      </button>
-
-                      <button type="button" aria-label="List">
-                        <List size={14} />
-                      </button>
-                    </div>
-
-                    <textarea
-                      id="overview"
-                      rows={5}
-                      maxLength={1000}
-                      value={overview}
-                      onChange={(event) => setOverview(event.target.value)}
+                    <input
+                      id="skills"
+                      type="text"
+                      placeholder="+ Add skill tag"
+                      value={skillInput}
+                      onChange={(event) => setSkillInput(event.target.value)}
+                      onKeyDown={handleSkillKeyDown}
                     />
                   </div>
                 </div>
 
+                <div className="suggested-skills">
+                  <span>Suggested:</span>
+
+                  {suggestedSkills.map((skill) => (
+                    <button
+                      type="button"
+                      key={skill}
+                      onClick={() => addSuggestedSkill(skill)}
+                    >
+                      + {skill}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-two-columns">
                 <div className="form-field">
-                  <label htmlFor="skills">Required Skills & Stack</label>
+                  <label>Work Arrangement</label>
 
-                  <div className="skills-field">
-                    <div className="selected-skills">
-                      {skills.map((skill) => (
-                        <span className="selected-skill" key={skill}>
-                          {skill}
-
-                          <button
-                            type="button"
-                            onClick={() => removeSkill(skill)}
-                            aria-label={`Remove ${skill}`}
-                          >
-                            <X size={11} />
-                          </button>
-                        </span>
-                      ))}
-
-                      <input
-                        id="skills"
-                        type="text"
-                        placeholder="+ Add skill tag"
-                        value={skillInput}
-                        onChange={(event) => setSkillInput(event.target.value)}
-                        onKeyDown={handleSkillKeyDown}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="suggested-skills">
-                    <span>Suggested:</span>
-
-                    {suggestedSkills.map((skill) => (
+                  <div className="segmented-control">
+                    {["Remote", "Hybrid", "On-site"].map((option) => (
                       <button
                         type="button"
-                        key={skill}
-                        onClick={() => addSuggestedSkill(skill)}
+                        key={option}
+                        className={workArrangement === option ? "active" : ""}
+                        onClick={() => setWorkArrangement(option)}
                       >
-                        + {skill}
+                        {option}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="form-two-columns">
-                  <div className="form-field">
-                    <label>Work Arrangement</label>
+                <div className="form-field">
+                  <label htmlFor="location">Location / Timezone Range</label>
 
-                    <div className="segmented-control">
-                      {["Remote", "Hybrid", "On-site"].map((option) => (
-                        <button
-                          type="button"
-                          key={option}
-                          className={workArrangement === option ? "active" : ""}
-                          onClick={() => setWorkArrangement(option)}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <div className="input-with-icon">
+                    <Globe2 size={14} />
 
-                  <div className="form-field">
-                    <label htmlFor="location">Location / Timezone Range</label>
-
-                    <div className="input-with-icon">
-                      <Globe2 size={14} />
-
-                      <input
-                        id="location"
-                        type="text"
-                        value={location}
-                        onChange={(event) => setLocation(event.target.value)}
-                      />
-                    </div>
+                    <input
+                      id="location"
+                      type="text"
+                      value={location}
+                      onChange={(event) => setLocation(event.target.value)}
+                    />
                   </div>
                 </div>
+              </div>
 
-                <div className="compensation-card">
-                  <div className="compensation-heading">
-                    <div>
-                      <div className="compensation-title">
-                        <CircleDollarSign size={15} />
+              <div className="compensation-card">
+                <div className="compensation-heading">
+                  <div>
+                    <div className="compensation-title">
+                      <CircleDollarSign size={15} />
 
-                        <span>Compensation Structure</span>
-                      </div>
-                    </div>
-
-                    <span>Pay transparency required by community charter</span>
-                  </div>
-
-                  <div className="compensation-fields">
-                    <div className="form-field">
-                      <label>Currency</label>
-
-                      <div className="select-field">
-                        <select
-                          value={currency}
-                          onChange={(event) => setCurrency(event.target.value)}
-                        >
-                          <option>USD ($)</option>
-
-                          <option>EUR (€)</option>
-
-                          <option>GBP (£)</option>
-
-                          <option>NGN (₦)</option>
-                        </select>
-
-                        <ChevronDown size={13} />
-                      </div>
-                    </div>
-
-                    <div className="form-field">
-                      <label>Min Pay / Rate</label>
-
-                      <input
-                        type="text"
-                        value={minPay}
-                        onChange={(event) => setMinPay(event.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-field">
-                      <label>Max Pay / Rate</label>
-
-                      <div className="pay-input">
-                        <input
-                          type="text"
-                          value={maxPay}
-                          onChange={(event) => setMaxPay(event.target.value)}
-                        />
-
-                        <span>/ {payPeriod}</span>
-                      </div>
+                      <span>Compensation Structure</span>
                     </div>
                   </div>
 
-                  <div className="compensation-options">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={includesEquity}
-                        onChange={(event) =>
-                          setIncludesEquity(event.target.checked)
-                        }
-                      />
-
-                      <span>Includes Equity (0.25% - 0.75%)</span>
-                    </label>
-
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={tokenGrant}
-                        onChange={(event) =>
-                          setTokenGrant(event.target.checked)
-                        }
-                      />
-
-                      <span>Token Grant / Incentive Pool</span>
-                    </label>
-                  </div>
+                  <span>Pay transparency required by community charter</span>
                 </div>
 
-                <div className="form-two-columns">
+                <div className="compensation-fields">
                   <div className="form-field">
-                    <label htmlFor="deadline">Application Deadline</label>
-
-                    <div className="input-with-icon">
-                      <CalendarDays size={14} />
-
-                      <input
-                        id="deadline"
-                        type="date"
-                        value={deadline}
-                        onChange={(event) => setDeadline(event.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-field">
-                    <label htmlFor="start-window">Target Start Window</label>
+                    <label>Currency</label>
 
                     <div className="select-field">
                       <select
-                        id="start-window"
-                        value={startWindow}
-                        onChange={(event) => setStartWindow(event.target.value)}
+                        value={currency}
+                        onChange={(event) => setCurrency(event.target.value)}
                       >
-                        <option>Immediately</option>
+                        <option>USD ($)</option>
 
-                        <option>Within 14 days</option>
+                        <option>EUR (€)</option>
 
-                        <option>Within 30 days</option>
+                        <option>GBP (£)</option>
 
-                        <option>Within 60 days</option>
-
-                        <option>Flexible</option>
+                        <option>NGN (₦)</option>
                       </select>
 
-                      <ChevronDown size={14} />
+                      <ChevronDown size={13} />
+                    </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label>Min Pay / Rate</label>
+
+                    <input
+                      type="text"
+                      value={minPay}
+                      onChange={(event) => setMinPay(event.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label>Max Pay / Rate</label>
+
+                    <div className="pay-input">
+                      <input
+                        type="text"
+                        value={maxPay}
+                        onChange={(event) => setMaxPay(event.target.value)}
+                      />
+
+                      <span>/ {payPeriod}</span>
                     </div>
                   </div>
                 </div>
-              </section>
-              <section className="form-section">
-                <div className="form-section-heading">
-                  <div className="section-heading-left">
-                    <span className="section-number">3</span>
-                    <div>
-                      <h2>Application & Screening Protocol</h2>
-                      <p>
-                        Streamlined submissions powered by verified builder
-                        profiles
-                      </p>
-                    </div>
+
+                <div className="compensation-options">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={includesEquity}
+                      onChange={(event) =>
+                        setIncludesEquity(event.target.checked)
+                      }
+                    />
+
+                    <span>Includes Equity (0.25% - 0.75%)</span>
+                  </label>
+
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={tokenGrant}
+                      onChange={(event) => setTokenGrant(event.target.checked)}
+                    />
+
+                    <span>Token Grant / Incentive Pool</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="form-two-columns">
+                <div className="form-field">
+                  <label htmlFor="deadline">Application Deadline</label>
+
+                  <div className="input-with-icon">
+                    <CalendarDays size={14} />
+
+                    <input
+                      id="deadline"
+                      type="date"
+                      value={deadline}
+                      onChange={(event) => setDeadline(event.target.value)}
+                    />
                   </div>
-                  <span className="section-required configurable">
-                    Configurable
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="start-window">Target Start Window</label>
+
+                  <div className="select-field">
+                    <select
+                      id="start-window"
+                      value={startWindow}
+                      onChange={(event) => setStartWindow(event.target.value)}
+                    >
+                      <option>Immediately</option>
+
+                      <option>Within 14 days</option>
+
+                      <option>Within 30 days</option>
+
+                      <option>Within 60 days</option>
+
+                      <option>Flexible</option>
+                    </select>
+
+                    <ChevronDown size={14} />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="form-section">
+              <div className="form-section-heading">
+                <div className="section-heading-left">
+                  <span className="section-number">3</span>
+
+                  <div>
+                    <h2>Application & Screening Protocol</h2>
+
+                    <p>
+                      Streamlined submissions powered by verified builder
+                      profiles
+                    </p>
+                  </div>
+                </div>
+
+                <span className="section-required configurable">
+                  Configurable
+                </span>
+              </div>
+
+              <div className="fast-apply-card">
+                <div className="fast-apply-icon">
+                  <Zap size={18} />
+                </div>
+
+                <div className="fast-apply-content">
+                  <h3>
+                    Foundry Fast Apply
+                    <span>Recommended</span>
+                  </h3>
+
+                  <p>
+                    Applicants submit with their verified builder graph:
+                    milestone proofs, GitHub pull requests, demo sandbox links,
+                    and reputation scores. Zero cover letters required.
+                  </p>
+
+                  <div className="fast-apply-benefits">
+                    <span>
+                      <Check size={11} />
+                      1-click submission
+                    </span>
+
+                    <span>
+                      <Check size={11} />
+                      Direct DM in Foundry Chat
+                    </span>
+
+                    <span>
+                      <Check size={11} />
+                      Verified commit history
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className={`toggle-switch ${fastApply ? "active" : ""}`}
+                  onClick={() => setFastApply(!fastApply)}
+                  aria-label="Toggle Fast Apply"
+                >
+                  <span />
+                </button>
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="application-url">
+                  External Application URL
+                  <span className="optional">Optional fallback</span>
+                </label>
+
+                <div className="input-with-icon">
+                  <Send size={14} />
+
+                  <input
+                    id="application-url"
+                    type="url"
+                    value={applicationUrl}
+                    onChange={(event) => setApplicationUrl(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="screening-question">
+                  Custom Technical Prompt / Screening Question
+                </label>
+
+                <textarea
+                  id="screening-question"
+                  rows={3}
+                  value={screeningQuestion}
+                  onChange={(event) => setScreeningQuestion(event.target.value)}
+                />
+              </div>
+            </section>
+          </div>
+
+          <aside className="create-opportunity-sidebar">
+            <section className="preview-card-wrapper">
+              <div className="side-card-heading">
+                <div>
+                  <span className="live-indicator" />
+
+                  <strong>Live Feed Card Preview</strong>
+                </div>
+
+                <span>As seen in Discover feed</span>
+              </div>
+
+              <div className="feed-preview">
+                <div className="preview-top">
+                  <div className="preview-project-icon">
+                    <BriefcaseBusiness size={17} />
+                  </div>
+
+                  <div className="preview-meta">
+                    <span>Aether Spatial Engine</span>
+
+                    <span>·</span>
+
+                    <span>{workArrangement}</span>
+                  </div>
+                </div>
+
+                <h3>{previewTitle}</h3>
+
+                <p>{previewDescription}</p>
+
+                <div className="preview-tags">
+                  {skills.slice(0, 4).map((skill) => (
+                    <span key={skill}>{skill}</span>
+                  ))}
+                </div>
+
+                <div className="preview-details">
+                  <span>
+                    <CircleDollarSign size={12} />
+
+                    {previewCompensation}
+                  </span>
+
+                  <span>
+                    <Plus size={11} />
+
+                    {includesEquity ? "Equity" : "No Equity"}
+                  </span>
+
+                  <span>
+                    <Clock3 size={12} />
+                    Ends in 24d
                   </span>
                 </div>
 
-                <div className="fast-apply-card">
-                  <div className="fast-apply-icon">
-                    <Zap size={18} />
-                  </div>
-                  <div className="fast-apply-content">
-                    <h3>
-                      Foundry Fast Apply
-                      <span>Recommended</span>
-                    </h3>
-                    <p>
-                      Applicants submit with their verified builder graph:
-                      milestone proofs, Github pull requests, demo sandbox
-                      links, and reputation scores. Zero cover letters required
-                    </p>
-                    <div className="fast-apply-benefits">
-                      <span>
-                        <Check size={11} />
-                        1-click submission
-                      </span>
-                      <span>
-                        <Check size={11} />
-                        Direct DM in Foundry Chat
-                      </span>
-                      <span>
-                        <Check size={11} />
-                        Verified commit history
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`toggle-switch ${fastApply ? "active" : ""}`}
-                    onClick={() => setFastApply(!fastApply)}
-                    aria-label="Toggle Fast Apply"
-                  >
-                    <span />
-                  </button>
+                <button type="button" className="preview-fast-apply">
+                  <Zap size={14} />
+                  Fast Apply with Profile
+                </button>
+              </div>
+
+              <div className="preview-update-note">
+                <CircleCheckIcon />
+                Card updates in real-time as you type
+              </div>
+            </section>
+
+            <section className="match-health-card">
+              <div className="match-health-heading">
+                <div>
+                  <FileText size={16} />
+
+                  <h2>Estimated Match Health</h2>
                 </div>
 
-                <div className="form-field">
-                  <label htmlFor="application-url">
-                    External Application URL
-                    <span className="optional">Optional fallback</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <Send size={14} />
-                    <input
-                      id="application-url"
-                      type="url"
-                      value={applicationUrl}
-                      onChange={(event) =>
-                        setApplicationUrl(event.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="form-field">
-                  <label htmlFor="screening-question">
-                    Custom Technical Prompt / Screening Question
-                  </label>
-                  <textarea
-                    id="screening-question"
-                    rows={3}
-                    value={screeningQuestion}
-                    onChange={(event) =>
-                      setScreeningQuestion(event.target.value)
-                    }
-                  />
-                </div>
-              </section>
-            </div>
-            <aside className="create-opportunity-sidebar">
-              <section className="preview-card-wrapper">
-                <div className="side-card-heading">
-                  <div>
-                    <span className="live-indicator" />
-                    <strong>Live Feed Card Preview</strong>
-                  </div>
-                  <span>As seen in Discover feed</span>
-                </div>
-                <div className="feed-preview">
-                  <div className="preview-top">
-                    <div className="preview-project-icon">
-                      <BriefcaseBusiness size={17} />
-                    </div>
-                    <div className="preview-meta">
-                      <span>Aether Spatial Engine</span>
-                      <span>·</span>
-                      <span>{workArrangement}</span>
-                    </div>
-                  </div>
-                  <h3>{previewTitle}</h3>
-                  <p>{previewDescription}</p>
-                  <div className="preview-tags">
-                    {skills
-                    .slice(0, 4)
-                    .map((skill) => (
+                <span>Strong 88/100</span>
+              </div>
 
-                      <span key={skill}>
-                        {skill}
-                      </span>
+              <p className="match-description">
+                Based on the selected stack (Rust + WebGPU) and pay bracket,
+                here is the projected talent engagement in Foundry.
+              </p>
 
-                    ))}
-                  </div>
+              <div className="candidate-pool">
+                <div className="candidate-pool-heading">
+                  <span>Active Matching Builders Pool</span>
+
+                  <strong>1,482 candidates</strong>
                 </div>
-              </section>
-            </aside>
+
+                <div className="candidate-bar">
+                  <span className="senior-bar" />
+
+                  <span className="mid-bar" />
+
+                  <span className="independent-bar" />
+                </div>
+
+                <div className="candidate-legend">
+                  <span>
+                    <i />
+                    Senior (62%)
+                  </span>
+
+                  <span>
+                    <i />
+                    Mid-level (26%)
+                  </span>
+
+                  <span>
+                    <i />
+                    Independent (12%)
+                  </span>
+                </div>
+              </div>
+
+              <ul className="match-insights">
+                <li>
+                  <Check size={13} />
+                  Salary transparency increases click-through by 44%.
+                </li>
+
+                <li>
+                  <Check size={13} />
+                  Fast Apply enables instant DM routing with verified code
+                  authors.
+                </li>
+
+                <li>
+                  <span className="insight-icon">!</span>
+                  Tip: Add a GitHub repository link in your linked project for
+                  2x developer trust.
+                </li>
+              </ul>
+            </section>
+
+            <section className="integrity-guarantee">
+              <ShieldCheck size={24} />
+
+              <div>
+                <h3>Foundry Integrity Guarantee</h3>
+
+                <p>
+                  Spam and fraudulent listings are automatically flagged. All
+                  published opportunities adhere to the Foundry Fair Opportunity
+                  standard.
+                </p>
+              </div>
+            </section>
+          </aside>
+        </div>
+
+        <div className="create-opportunity-footer">
+          <button
+            type="button"
+            className="save-draft-button"
+            onClick={handleSaveDraft}
+          >
+            {isSaved ? <Check size={15} /> : <Save size={15} />}
+
+            {isSaved ? "Saved" : "Save as Draft"}
+          </button>
+
+          <div className="mvp-free-tier">
+            <strong>MVP Free Tier Active</strong>
+
+            <span>$0 publication fee</span>
           </div>
-        </form>
-      </MainLayout>
-    );
-  };
+
+          <button type="submit" className="publish-opportunity-button">
+            <Rocket size={15} />
+            Publish Opportunity
+          </button>
+        </div>
+      </form>
+    </MainLayout>
+  );
 }
+
+function CircleCheckIcon() {
+  return (
+    <span className="circle-check-icon">
+      <Check size={10} />
+    </span>
+  );
+}
+
 export default CreateOpportunity;
