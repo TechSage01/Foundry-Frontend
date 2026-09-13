@@ -1388,7 +1388,127 @@
   }
 }
 
+/* create opportunity page styling */
+.create-opportunity-page {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8px 0 40px;
+  color: #1f1f1f;
+}
 
+.create-opportunity-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
 
+.opportunity-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #737373;
+  font-size: 13px;
+  cursor: pointer;
+}
 
+.opportunity-breadcrumb:hover {
+  color: #1f1f1f;
+}
+.opportunity-breadcrumb strong {
+  color: #1f1f1f;
+  font-weight: 600;
+}
+
+.breadcrumb-divider {
+  color: #b5b5b5;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.autosave-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #737373;
+  font-size: 12px;
+}
+.autosave-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5f9f6f;
+}
+.discard-button {
+  border: none;
+  background: transparent;
+  color: #737373;
+  font-size: 12px;
+  cursor: pointer;
+}
+.discard-button:hover {
+  color: #d97757;
+}
+
+.create-opportunity-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 210px;
+  margin-bottom: 24px;
+  padding: 38px 42px;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.hero-content {
+  max-width: 700px;
+}
+.builder-network-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 15px;
+  padding: 7px 11px;
+  border: 1px solid rgba(217, 119, 87, 0.25);
+  border-radius: 999px;
+  background: #fff7f3;
+  color: #d97757;
+  font-size: 11px;
+  font-weight: 600;
+}
+.create-opportunity-hero h1 {
+  margin: 0 0 10px;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: -0.8px;
+  font-weight: 700;
+}
+.create-opportunity-hero p {
+  max-width: 650px;
+  margin: 0;
+  color: #737373;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.hero-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+  color: #d97757;
+  opacity: 0.14;
+}
+.create-opportunity-content
 
