@@ -1510,5 +1510,8 @@
   color: #d97757;
   opacity: 0.14;
 }
-.create-opportunity-content
+.create-opportunity-content {
+  display: grid;
+  
+}
 
