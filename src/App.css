@@ -2771,4 +2771,10 @@
 }
 .community-category {
   padding: 5px 8px;
+  border-radius: 5px;
+  background: #f7f7f7;
+  color: #737373;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
 }

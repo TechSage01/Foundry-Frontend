@@ -72,9 +72,14 @@ function Communities() {
       <div className="communities-page">
         <section className="communities-header">
           <div className="communities-header-content">
-            <span className="communities-eyebrow">ECOSYSTEM & GUILDS</span>
+            <div className="communities-eyebrow-row">
+              <span className="communities-eyebrow">ECOSYSTEM & GUILDS</span>
+
+              <span className="communities-divider-dot">•</span>
+
+              <span className="communities-count">34 Active Circles</span>
+            </div>
             <h1>Communities</h1>
-            <p>Find your people. Share knowledge. Build together.</p>
           </div>
           <Link to="/communities/create" className="create-community-button">
             <Plus size={18} />
@@ -189,36 +194,35 @@ function Communities() {
           </div>
         )}
         <section className="community-spotlight">
-            <div className="spotlight-content">
-                <span className="spotlight-eyebrow">
-                  WEEKLY SPOTLIGHT
-                </span>
-                <h2>
-                  Foundry Global Build Sprint
-                </h2>
-                <p>Join builders across the ecosystem for a week of shipping, collaboration, and open source building</p>
-                <div className="spotlight-meta">
-                  <span>7 days</span>
-                  <span>•</span>
-                  <span>1,200+ builders</span>
-                </div>
-                <button
-                  type="button"
-                  className="spotlight-button"
-                  onClick={() => {
-                    console.log('Register team')
-                  }}
-                  >
-                    Register Team
-                    <ArrowUpRight size={17} />
-                  </button>
+          <div className="spotlight-content">
+            <span className="spotlight-eyebrow">WEEKLY SPOTLIGHT</span>
+            <h2>Foundry Global Build Sprint</h2>
+            <p>
+              Join builders across the ecosystem for a week of shipping,
+              collaboration, and open source building
+            </p>
+            <div className="spotlight-meta">
+              <span>7 days</span>
+              <span>•</span>
+              <span>1,200+ builders</span>
             </div>
-            <div className="spotlight-visual">
-              <span>BUILD</span>
-            </div>
+            <button
+              type="button"
+              className="spotlight-button"
+              onClick={() => {
+                console.log("Register team");
+              }}
+            >
+              Register Team
+              <ArrowUpRight size={17} />
+            </button>
+          </div>
+          <div className="spotlight-visual">
+            <span>BUILD</span>
+          </div>
         </section>
       </div>
     </MainLayout>
-  )
+  );
 }
 export default Communities;
