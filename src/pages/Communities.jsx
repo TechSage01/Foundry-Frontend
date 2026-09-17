@@ -44,7 +44,7 @@ function Communities() {
     return number;
   };
 
-  const getCommunityIcon = (Icon) => {
+  const getCommunityIcon = (icon) => {
     const iconProps = {
       size: 22,
       strokeWidth: 1.8,
@@ -190,11 +190,35 @@ function Communities() {
         )}
         <section className="community-spotlight">
             <div className="spotlight-content">
-                
+                <span className="spotlight-eyebrow">
+                  WEEKLY SPOTLIGHT
+                </span>
+                <h2>
+                  Foundry Global Build Sprint
+                </h2>
+                <p>Join builders across the ecosystem for a week of shipping, collaboration, and open source building</p>
+                <div className="spotlight-meta">
+                  <span>7 days</span>
+                  <span>•</span>
+                  <span>1,200+ builders</span>
+                </div>
+                <button
+                  type="button"
+                  className="spotlight-button"
+                  onClick={() => {
+                    console.log('Register team')
+                  }}
+                  >
+                    Register Team
+                    <ArrowUpRight size={17} />
+                  </button>
+            </div>
+            <div className="spotlight-visual">
+              <span>BUILD</span>
             </div>
         </section>
       </div>
     </MainLayout>
-  );
+  )
 }
 export default Communities;
