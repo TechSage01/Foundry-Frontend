@@ -12,7 +12,7 @@ const communities = [
     {
         id: 2,
         name: 'Atomic Scale',
-        category: 'Design Systemd',
+        category: 'Design Systems',
         description:
            'Creating token-driven, accessible competent libraries and design toolinh',
         builders: 890,
