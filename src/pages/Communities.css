@@ -288,3 +288,174 @@
 .community-card-content {
     flex: 1;
 }
+.community-card-content h2 {
+    margin: 0 0 8px;
+    color: #1f1f1f;
+    font-size: 17px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+.community-card-content p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  margin: 0;
+  color: #737373;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.community-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 15px 0;
+    border-top: 1px solid #e5e5e5;
+    margin-top: 20px;
+}
+.community-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #737373;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.community-stat svg {
+  color: #8a8a8a;
+}
+.community-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.join-community-button{
+  flex: 1;
+  height: 36px;
+  border: 1px solid #2d2d2d;
+  border-radius: 6px;
+  background: #2d2d2d;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+.join-community-button:hover {
+  background: #1f1f1f;
+  border-color: #1f1f1f;
+}
+.community-arrow-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #2d2d2d;
+  cursor: pointer;
+  transition: 
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+.community-arrow-button:hover {
+  border-color: #d97757;
+  background: #faf9f6;
+  color: #d97757;
+}
+.communities-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 40px;
+  border: 1px dashed #e5e5e5;
+  border-radius: 10px;
+  background: #ffffff;
+  text-align: center;
+}
+.communities-empty svg {
+  margin-bottom: 14px;
+  color: #737373;
+}
+.communities-empty h2 {
+  margin: 0 0 6px;
+  color: #1f1f1f;
+  font-size: 18px;
+  font-weight: 700;
+}
+.communities-empty p {
+  margin: 0 0 18px;
+  color: #737373;
+  font-size: 12px;
+}
+.communities-empty button {
+  height: 34px;
+  padding: 0 13px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #2d2d2d;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.communities-empty button:hover {
+  border-color: #d97757;
+  color: #d97757;
+}
+.community-spotlight {
+  display: grid;
+  grid-template-columns: 1fr 0.85fr;
+  min-height: 260px;
+  margin-top: 28px;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  background: #ffffff;
+}
+.spotlight-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 36px;
+}
+.spotlight-eyebrow {
+  margin-bottom: 12px;
+  color: #d97757;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+}
+.spotlight-content h2 {
+  max-width: 450px;
+  margin: 0 0 10px;
+  color: #1f1f1f;
+  font-size: 27px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.spotlight-content p {
+  max-width: 500px;
+  margin: 0;
+  color: #737373;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.spotlight-meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
