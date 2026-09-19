@@ -6,7 +6,8 @@ import xIcon from "../assets/icons/x.png";
 import foundryLogo from "../assets/foundry-logo.png";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useState } from "react";
+import { React, useEffect, useState } from "react";
+import { useSearchParams } from 'react-router-dom'
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://foundry-00kt.onrender.com";
@@ -16,7 +17,15 @@ function SignIn() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const navigate = useNavigate();
+  const[searchParams] = useSearchParams()
 const [socialLoading, setSocialLoading] = useState(null);
+useEffect(() => {
+    // Catch error parameter sent back by backend redirect
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+    }
+  }, [searchParams]);
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) {

@@ -11,6 +11,8 @@ import LandingPage from './pages/LandingPage.jsx'
 import ProtectedRoutes from './components/ProtectedRoutes.jsx';
 import ManifestoPage from './pages/ManifestoPage.jsx'
 import Opportunities from './pages/Opportunities';
+import OAuthCallback from './pages/OAuthCallBack.jsx';
+import ExplorePage from './pages/ExplorePage.jsx';
 
 export default function App() {
   const [selectedTopic, setSelectedTopic] = React.useState(null);
@@ -21,6 +23,8 @@ export default function App() {
         <Route path="/signin" element={<SignIn />} />
         <Route path='/verify' element={<VerifyOtp/>} />
         <Route path='/manifesto' element={<ManifestoPage/>}/>
+        <Route path='/explore' element={<ExplorePage/>}/>
+        <Route path="/auth/callback" element={<OAuthCallback />} />
        <Route element={<ProtectedRoutes/>}>
          <Route path="/home" 
         element={<MainLayout rightSidebar={<RightSidebar 
