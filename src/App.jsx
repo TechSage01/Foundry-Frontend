@@ -8,7 +8,7 @@ import Profile from "./pages/Profile";
 import CreateOpportunity from "./pages/CreateOpportunity.jsx";
 import Opportunities from "./pages/Opportunities";
 import Communities from "./pages/Communities.jsx";
-import CreateCommunity from "./pages/CreateCommunity.jsx";
+// import CreateCommunity from "./pages/CreateCommunity.jsx";
 
 export default function App() {
   return (
@@ -27,7 +27,7 @@ export default function App() {
         <Route path="/opportunities" element={<Opportunities />} />
         <Route path="/opportunities/create" element={<CreateOpportunity />} />
         <Route path="/communities" element={<Communities />} />
-        <Route path="/communities/create" element={<CreateCommunity />} />
+        {/* <Route path="/communities/create" element={<CreateCommunity />} /> */}
       </Routes>
     </Router>
   );
