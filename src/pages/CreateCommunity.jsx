@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   Check,
+  Github,
   ChevronDown,
   Eye,
   Github,
@@ -16,6 +17,7 @@ import {
   Sparkles,
   Users,
   X,
+  ArrowUpRight,
 } from "lucide-react";
 
 import MainLayout from "../components/layout/MainLayout";
@@ -551,10 +553,186 @@ Describe what this community exists to build, explore, or discuss.
                 </div>
               )}
             </section>
-            <section>
-              
+            <section className="community-form-section">
+              <div className="form-section-heading">
+                <div>
+                  <div className="section-title-row">
+                    <h2>Sync Cadence &amp; Channels</h2>
+                    <span className="section-badge-optional">
+                      Optional
+                    </span>
+                  </div>
+                  <p>Give members clear places and rhythms for collaboration.</p>
+                </div>
+              </div>
+              <div className="sync-fields">
+                <div className="form-field">
+                  <label htmlFor="discussion-topics">
+                    Default Discussion Topics
+                  </label>
+                  <input 
+                    id="discussion-topics"
+                    name="discussionTopics"
+                    type="text"
+                    value={discussionTopics}
+                    onChange={(event) =>
+                      setDiscussionTopics(event.target.value)
+                    }
+                    placeholder="e.g. architecture, tooling, research"
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="live-sync">
+                    Live Architecture Sync
+                  </label>
+                  <div className="select-wrapper">
+                    <select 
+                      name="liveSync" 
+                      id="live-sync"
+                      value={liveSync}
+                      onChange={(event) =>
+                        setLiveSync(event.target.value)
+                      }
+                      >
+                        <option value="">Select cadence</option>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Bi-weekly">Bi-weekly</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="No fixed cadence">No fixed cadence</option>
+                      </select>
+                      <ChevronDown size={16} />
+                  </div>
+                </div>
+                <div className="form-field">
+                  <label htmlFor="github-link">
+                    Github Organization / Repo
+                  </label>
+                  <div className="input-with-icon">
+                    <Github size={16} />
+                    <input 
+                      id="github-link"
+                      name="githubLink"
+                      type="url"
+                      value={githubLink}
+                      onChange={(event) =>
+                        setGithubLink(event.target.value)
+                      }
+                      placeholder="https://github.com/..."
+                    />
+                  </div>
+                </div>
+                <div className="form-field">
+                  <label htmlFor="community-link">
+                    Matrix Room / Discord Link
+                  </label>
+                  <div className="input-with-icon">
+                    <LinkIcon size={16} />
+                    <input 
+                      id="community-link"
+                      name="communityLink"
+                      type="url"
+                      value={communityLink}
+                      onChange={(event) =>
+                        setCommunityLink(event.target.value)
+                      }
+                      placeholder="https://discord.gg/..."
+                    />
+                  </div>
+                </div>
+              </div>
             </section>
+            <div className="create-community-form-actions">
+              <button
+                type="button"
+                className="save-draft-button"
+                onClick={handleSaveDraft}
+              >
+                <Save size={16} />
+                Save Pod Draft
+              </button>
+              <button
+                type="submit"
+                className="launch-community-button"
+              >
+                <Send size={16} />
+                Found Community &amp; Launch Pod
+              </button>
+            </div>
           </main>
+          <aside className="create-community-sidebar">
+            <section className="community-side-card preview-card">
+              <div className="side-card-header">
+                <div>
+                  <span className="side-card-eyebrow">
+                    DIRECTORY PREVIEW
+                  </span>
+                  <h2>Live Preview</h2>
+                </div>
+                <span className="live-status">
+                  <span />
+                  Live
+                </span>
+              </div>
+               <p className="preview-description">
+                This is how your community will appear
+                in the Foundry directory.
+              </p>
+              <div className="directory-preview">
+                <div className="preview-icon">
+                  <Sparkles size={22} />
+                </div>
+                <div className="preview-main">
+                  <div className="preview-title-row">
+                    <h3>{previewName}</h3>
+                    <span>
+                      {previewMembership}
+                    </span>
+                  </div>
+                  <p>{previewTagline}</p>
+                  <div className="preview-slug">
+                    foundry.network/c/ 
+                    {previewSlug}
+                  </div>
+                  {techStack.length > 0 && (
+                    <div className="preview-tags">
+
+                      {techStack
+                        .slice(0, 5)
+                        .map((token) => (
+                          <span key={token}>
+                            {token}
+                          </span>
+                        ))}
+                        </div>
+                  )}
+                  <div className="preview-footer">
+                    <span>
+                      <Users size={14} />
+                      0 members
+                    </span>
+                    <button type="button">
+                      Request to Join Pod
+                      <ArrowUpRight size={14}/>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section className="community-side-card readiness-card">
+                  <div className="side-card-header">
+                    <div>
+                      <span className="side-card-eyebrow">
+                          FOUNDING READINESS
+                      </span>
+                      <h2>
+                        {readinessPercentage}
+                        Complete
+                      </h2>
+                    </div>
+                    <span></span>
+                  </div>
+            </section>
+          </aside>
         </form>
       </div>
     </MainLayout>
