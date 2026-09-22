@@ -34,10 +34,51 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-
   const [statusMessage, setStatusMessage] = useState({ type: "", text: "" });
   const [hasError, setHasError] = useState(false);
+  const [activeTab, setActiveTab] = useState("projects");
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [reposts, setReposts] = useState([]);
+  const [likedItems, setLikedItems] = useState([]);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [totalLikes, setTotalLikes] = useState(0);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
+  const [createPostOpen, setCreatePostOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
 
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [createChooserOpen, setCreateChooserOpen] = useState(false);
+  const [projectCoverPreview, setProjectCoverPreview] = useState(false);  
+  const [projectForm, setProjectForm] = useState({
+    title: "",
+    tagLine: "",
+    description: "",
+    cover_image: null,
+    demo_url: "",
+    repo_url: "",
+    tech_stack: "",
+    category: "AI & ML",
+  });
+  const [postForm, setPostForm] = useState({
+    title: "",
+    content: "",
+    image: null,
+  });
+  const [followModal, setFollowModal] = useState({
+    isOpen: false,
+    activeTab: "followers",
+    followers: [],
+    following: [],
+    followersLoaded: false,
+    followingLoaded: false,
+    loading: false,
+    error: "",
+  });
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -60,16 +101,17 @@ function Profile() {
     message: "",
     onConfirm: null,
   });
+  const projectCoverInputRef = useRef(null)
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
-  const [ imageConfirm, setImageConfirm ] = useState({
+  const [imageConfirm, setImageConfirm] = useState({
     isOpen: false,
     type: "",
     file: null,
     preview: "",
   });
-  const [ imageUploading, setImageUploading ] = useState(false);
-  const [ toast, setToast ] = useState({
+  const [imageUploading, setImageUploading] = useState(false);
+  const [toast, setToast] = useState({
     // isOpen: false,
     type: "",
     text: "",
@@ -103,12 +145,10 @@ function Profile() {
           message: "",
           onConfirm: null,
         });
-      handleOpenEdit()
-
+        handleOpenEdit();
       },
     });
   };
-
 
   const handleExperienceChange = (index, field, value) => {
     setExperienceForm((prev) =>
@@ -159,6 +199,204 @@ function Profile() {
       },
     });
   };
+  const CATEGORY_OPTIONS = [
+      "AI_ML",
+      "Web_Development",
+      "Mobile",
+      "DevOps",
+      "Graphic_Design",
+      "Data_Science",
+      "Other",
+    ];
+
+  const handleCreateProject = async () => {
+    if (!projectForm.title.trim() || !projectForm.tagLine.trim()) {
+      setCreateError("Project title and tagline is required.");
+      return;
+    }
+    setCreateError("");
+    setCreating(true);
+    try {
+      const data = new FormData();
+      data.append("title", projectForm.title.trim());
+      data.append("tagline", projectForm.tagLine.trim());
+      data.append("description", projectForm.description.trim());
+      data.append("category", projectForm.category.trim());
+      data.append(
+        "tech_stack",
+        JSON.stringify(
+          projectForm.tech_stack
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean),
+        ),
+      );
+      if (projectForm.demo_url)
+        data.append("demo_url", projectForm.demo_url.trim());
+      if (projectForm.repo_url)
+        data.append("repo_url", projectForm.repo_url.trim());
+      if (projectForm.cover_image)
+        data.append("cover_image", projectForm.cover_image);
+
+      const res = await api.post("/api/projects", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const created = res.data?.data || res.data?.project || res.data;
+
+      setUserProjects((prev) => [created, ...prev]);
+      setProjectForm({
+        title: "",
+        tagline: "",
+        description: "",
+        tech_stack: "",
+        demo_url: "",
+        repo_url: "",
+        cover_image: null,
+        category: "AI & ML",
+
+      });
+      setProjectCoverPreview("")
+      setCreateProjectOpen(false);
+      showToast("success", "Project published successfully.");
+    } catch (error) {
+      setCreateError(
+        error.response?.data?.message || "Failed to create project.",
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!postForm.title.trim() || !postForm.content.trim()) {
+      setCreateError("Title and content are required.");
+      return;
+    }
+    setCreateError("");
+    setCreating(true);
+    try {
+      const data = new FormData();
+      data.append("title", postForm.title.trim());
+      data.append("content", postForm.content.trim());
+      if (postForm.image) data.append("image", postForm.image);
+
+      const res = await api.post("/api/posts", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const created = res.data?.data || res.data?.post || res.data;
+
+      setPosts((prev) => [created, ...prev]);
+      setPostForm({ title: "", content: "", image: null });
+      setCreatePostOpen(false);
+      showToast("success", "Post published successfully.");
+    } catch (error) {
+      setCreateError(error.response?.data?.message || "Failed to create post.");
+    } finally {
+      setCreating(false);
+    }
+  };
+  const handleToggleFollow = async () => {
+    const targetUserId = user?.id || user?._id;
+    if (!targetUserId || followLoading) return;
+    const previousState = isFollowing;
+    const previousCount = followersCount;
+    setIsFollowing(!previousState);
+    setFollowersCount((prev) =>
+      previousState ? Math.max(0, prev - 1) : prev + 1,
+    );
+    setFollowLoading(true);
+    try {
+      if (previousState) {
+        await api.delete(`/api/users/${targetUserId}/follow`);
+        showToast("success", `You Unfollowed @${user.username || "user"}.`);
+      } else {
+        await api.post(`/api/users/${targetUserId}/follow`);
+        showToast(
+          "success",
+          `Following @${user.username || "user"} successfully.`,
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+      setIsFollowing(previousState);
+      setFollowersCount(previousCount);
+      const errorMsg =
+        error.response?.data?.message || "Failed to update follow status";
+      showToast("error", errorMsg);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const fetchFollowList = async (type) => {
+    const username = user?.username;
+    if (!username) return;
+    setFollowModal((prev) => ({
+      ...prev,
+      loading: true,
+      error: "",
+    }));
+    try {
+      const res = await api.get(`/api/users/${username}/${type}`);
+      const raw = res.data?.data || res.data?.users || res.data || [];
+      const list = Array.isArray(raw) ? raw : raw?.[type] || raw?.users || [];
+      const users = list.map(
+        (item) => item.follower || item.following || item.user || item,
+      );
+      setFollowModal((prev) => ({
+        ...prev,
+        [type]: users,
+        [`${type}Loaded`]: true,
+      }));
+      if (type === "followers") setFollowersCount(users.length);
+      else setFollowingCount(users.length);
+    } catch (error) {
+      showToast("error", `Failed to fetch ${type}`);
+      setFollowModal((prev) => ({
+        ...prev,
+        error:
+          error.response?.data?.message ||
+          `couldn't load ${type} please try again later`,
+      }));
+    } finally {
+      setFollowModal((prev) => ({
+        ...prev,
+        loading: false,
+      }));
+    }
+  };
+  const openFollowModal = (type) => {
+    setFollowModal((prev) => ({
+      ...prev,
+      isOpen: true,
+      activeTab: type,
+      error: "",
+    }));
+    fetchFollowList(type);
+  };
+  const switchFollowTab = (type) => {
+    setFollowModal((prev) => ({
+      ...prev,
+      activeTab: type,
+      error: "",
+    }));
+    const alreadyLoaded =
+      type === "followers"
+        ? followModal.followersLoaded
+        : followModal.followingLoaded;
+    if (!alreadyLoaded) fetchFollowList(type);
+  };
+  const closeFollowModal = (prev) => {
+    setFollowModal({
+      isOpen: false,
+      activeTab: "followers",
+      followers: [],
+      following: [],
+      followersLoaded: false,
+      followingLoaded: false,
+      error: "",
+    });
+  };
 
   // GET Requests: Fetch initial profile & experiences
   const fetchUserProfile = async () => {
@@ -195,10 +433,17 @@ function Profile() {
           avatar: userAvatar,
           cover: userCover,
         });
-
+        setFollowersCount(
+          userData.followersCount ?? userData.followers?.length ?? 0,
+        );
+        setFollowingCount(
+          userData.followingCount ?? userData.following?.length ?? 0,
+        );
+        setIsFollowing(Boolean(userData.isFollowing));
         const username = userData.username;
 
         if (username) {
+          fetchUserPosts(username);
           try {
             const expRes = await api.get(`/api/experiences/user/${username}`);
             const rawData =
@@ -263,7 +508,31 @@ function Profile() {
   useEffect(() => {
     fetchUserProfile();
   }, []);
+  // LIKES
+  useEffect(() => {
+    const projectLikes = userProjects.reduce(
+      (sum, p) => sum + (p.likes_count || p.likes || 0),
+      0,
+    );
+    const postLikes = posts.reduce(
+      (sum, p) => sum + (p.likes_count || p.likes || 0),
+      0,
+    );
+    setTotalLikes(projectLikes + postLikes);
+  }, [userProjects, posts]);
 
+  const fetchUserPosts = async (username) => {
+    try {
+      setPostsLoading(true);
+      const res = await api.get(`/api/posts/user/${username}`); // adjust if your route differs
+      const fetched = res.data?.data || res.data?.posts || res.data;
+      if (Array.isArray(fetched)) setPosts(fetched);
+    } catch (error) {
+      console.error("Failed to fetch user posts:", error);
+    } finally {
+      setPostsLoading(false);
+    }
+  };
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (hasError) setHasError(false);
@@ -296,20 +565,23 @@ function Profile() {
     const updated = experienceForm.filter((_, i) => i !== index);
     setExperienceForm(updated);
   };
-  const showToast = (type, text) => { 
+  const showToast = (type, text) => {
     setToast({ type, text });
     setTimeout(() => setToast({ type: "", text: "" }), 3000);
-  }
-  const handleQuickImageSelect = (e, type) => { 
+  };
+  const handleQuickImageSelect = (e, type) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if(!file) return;
-    if(!file.type.startsWith("image/")) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
       showToast("error", "Please select a valid image file.");
       return;
     }
-    if(file.size > 5 * 1024 * 1024) {
-      showToast("error", "Image is to0 large, Image size should be less than 5MB.");
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(
+        "error",
+        "Image is to0 large, Image size should be less than 5MB.",
+      );
       return;
     }
     setImageConfirm({
@@ -319,22 +591,41 @@ function Profile() {
       preview: URL.createObjectURL(file),
     });
   };
-  const cancelImageChange = async() => {
-    if(imageConfirm.preview) URL.revokeObjectURL(imageConfirm.preview);
-    setImageConfirm({ 
+  const handleProjectCoverSelect = (e) => {
+    const file =  e.target.files?.[0];
+    e.target.value = "";
+    if(!file) return;
+    if(!file.type.startsWith("image/")) {
+      showToast("error", "Please select a valid image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(
+        "error",
+        "Image is too large, Image size should be less than 5MB.",
+      );
+      return;
+    }
+    if(projectCoverPreview) URL.revokeObjectURL(projectCoverPreview);
+    setProjectForm((p) => ({ ...p, cover_image: file }));
+    setProjectCoverPreview(URL.createObjectURL(file));
+  }
+  const cancelImageChange = async () => {
+    if (imageConfirm.preview) URL.revokeObjectURL(imageConfirm.preview);
+    setImageConfirm({
       isOpen: false,
       type: "",
       file: null,
       preview: "",
     });
   };
-  const confirmImageChange = async() => {
+  const confirmImageChange = async () => {
     const { type, file, preview } = imageConfirm;
-    if(!file) return;
-    
+    if (!file) return;
+
     try {
       setImageUploading(true);
-      
+
       const data = new FormData();
       data.append("username", user.username || "");
       data.append("headline", user.bio || "");
@@ -344,49 +635,59 @@ function Profile() {
         "skills",
         JSON.stringify(Array.isArray(user.skills) ? user.skills : []),
       );
-      data.append(type === "avatar" ? "avatar" : "cover_image", imageConfirm.file);
+      data.append(
+        type === "avatar" ? "avatar" : "cover_image",
+        imageConfirm.file,
+      );
 
       const res = await api.put("/api/profile", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const updated = res.data?.data || res.data?.user || res.data;
       let newUrl;
-      if(type === "avatar") {
-        newUrl = 
-        updated?.avatar ||
-        updated?.avatar_url ||
-        updated?.avatarUrl || 
-        preview;
+      if (type === "avatar") {
+        newUrl =
+          updated?.avatar ||
+          updated?.avatar_url ||
+          updated?.avatarUrl ||
+          preview;
         setAvatarPreview(newUrl);
         setUser((prev) => ({ ...prev, avatar: newUrl, avatar_url: newUrl }));
         setAvatarFile(null);
-
       } else {
         newUrl =
-        updated?.cover_url ||
-        updated?.cover ||
-        updated?.coverUrl ||
-        updated?.cover_image_url
+          updated?.cover_url ||
+          updated?.cover ||
+          updated?.coverUrl ||
+          updated?.cover_image_url;
         preview;
-        setCoverPreview(newUrl)
+        setCoverPreview(newUrl);
         setUser((prev) => ({ ...prev, cover: newUrl, cover_url: newUrl }));
         setCoverFile(null);
       }
-      if(newUrl !== preview) URL.revokeObjectURL(preview);
+      if (newUrl !== preview) URL.revokeObjectURL(preview);
       setImageConfirm({
         isOpen: false,
         type: "",
         file: null,
         preview: "",
       });
-      showToast("success", type === "avatar" ? "Profile picture updated successfully." : "Cover image updated successfully.");
-    } 
-    catch (error) {
-      showToast("error", error.response?.data.message || "An error occurred while updating the image.");
+      showToast(
+        "success",
+        type === "avatar"
+          ? "Profile picture updated successfully."
+          : "Cover image updated successfully.",
+      );
+    } catch (error) {
+      showToast(
+        "error",
+        error.response?.data.message ||
+          "An error occurred while updating the image.",
+      );
     } finally {
       setImageUploading(false);
     }
-  }
+  };
 
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
@@ -429,10 +730,10 @@ function Profile() {
 
       // const savedExperiences = await Promise.all(
       const toSave = experienceForm.filter(
-        (exp) => 
-        (exp.isNew || exp.isDirty) 
-        && exp.company_name?.trim()&& 
-        (exp.role?.trim() || exp.title?.trim()),
+        (exp) =>
+          (exp.isNew || exp.isDirty) &&
+          exp.company_name?.trim() &&
+          (exp.role?.trim() || exp.title?.trim()),
       );
       const savedExperiences = [];
       for (const exp of toSave) {
@@ -470,8 +771,10 @@ function Profile() {
           res = await api.put(`/api/experiences/${expId}`, payload);
         }
 
-          // Extract object correctly based on payload structure
-        savedExperiences.push(res.data?.data || res.data?.experience || res.data);
+        // Extract object correctly based on payload structure
+        savedExperiences.push(
+          res.data?.data || res.data?.experience || res.data,
+        );
       }
       // );
 
@@ -519,9 +822,11 @@ function Profile() {
       // });
       // setExperienceForm(savedExperiences);
       const idOf = (i) => String(i._id || i.id);
-      const savedMap = new Map(savedExperiences.map((i) => [idOf(i), i]))
-      const merged = timeline.map((item) => savedMap.get(idOf(item)) ?? item)
-      const brandNew = savedExperiences.filter((i) => !timeline.some((t) => idOf(t) === idOf(i)));
+      const savedMap = new Map(savedExperiences.map((i) => [idOf(i), i]));
+      const merged = timeline.map((item) => savedMap.get(idOf(item)) ?? item);
+      const brandNew = savedExperiences.filter(
+        (i) => !timeline.some((t) => idOf(t) === idOf(i)),
+      );
       const newTimeline = [...brandNew, ...merged];
       setTimeline(newTimeline);
       setExperienceForm(
@@ -616,20 +921,20 @@ function Profile() {
               className="w-full h-full object-cover"
             />
             <button
-            type="button"
-            onClick={() => coverInputRef.current?.click()}
-            aria-label="Change cover image"
-            className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-black/65 bg-black/50 font-semibold text-xs backdrop-blur-sm active:scale-95 rounded-xl transition cursor-pointer"
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              aria-label="Change cover image"
+              className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-black/65 bg-black/50 font-semibold text-xs backdrop-blur-sm active:scale-95 rounded-xl transition cursor-pointer"
             >
-              <Camera size={14}/>
+              <Camera size={14} />
               <span>Change cover</span>
             </button>
-            <input 
-            type="file"
-            ref={coverInputRef}
-            accept="image/*"
-            className="hidden"
-            onChange={(e)=> handleQuickImageSelect(e, "cover")}
+            <input
+              type="file"
+              ref={coverInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleQuickImageSelect(e, "cover")}
             />
             <div className="absolute -bottom-12 left-6 ring-4 ring-white rounded-2xl overflow-hidden bg-white shadow-md">
               <img
@@ -645,23 +950,23 @@ function Profile() {
                   e.target.src = fallbackAvatar;
                 }}
               />
-               <button
-            type="button"
-            onClick={() => avatarInputRef.current?.click()}
-            aria-label="Change profile picture"
-            title="Change Profile Picture"
-            className="absolute bottom-1.5 right-1.5 flex items-center gap-1.5 px-3 py-1.5 text-white bg-[#A04622] hover:bg-[#85381a] font-semibold text-xs backdrop-blur-sm active:scale-95 rounded-xl transition cursor-pointer"
-            >
-              <Camera size={14}/>
-              <span>Change Profile</span>
-            </button>
-            <input 
-            type="file"
-            ref={avatarInputRef}
-            accept="image/*"
-            className="hidden"
-            onChange={(e)=> handleQuickImageSelect(e, "avatar")}
-            />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                aria-label="Change profile picture"
+                title="Change Profile Picture"
+                className="absolute bottom-1.5 right-1.5 flex items-center gap-1.5 px-3 py-1.5 text-white bg-[#A04622] hover:bg-[#85381a] font-semibold text-xs backdrop-blur-sm active:scale-95 rounded-xl transition cursor-pointer"
+              >
+                <Camera size={14} />
+                <span>Change Profile</span>
+              </button>
+              <input
+                type="file"
+                ref={avatarInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleQuickImageSelect(e, "avatar")}
+              />
             </div>
           </div>
 
@@ -696,6 +1001,13 @@ function Profile() {
 
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setCreateChooserOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 border-2 border-[#A04622] text-[#A04622] hover:bg-[#FDF4F0] rounded-xl text-sm font-semibold transition-all active:scale-95 cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Create</span>
+              </button>
+              <button
                 onClick={handleOpenEdit}
                 className="flex items-center gap-2 px-4 py-2.5 bg-[#A04622] hover:bg-[#85381a] text-white rounded-xl text-sm font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
               >
@@ -709,10 +1021,7 @@ function Profile() {
               >
                 <Share2 size={18} />
               </button>
-              <button
-                className="p-2.5 text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/70 rounded-xl transition cursor-pointer"
-                aria-label="More options"
-              ></button>
+              
             </div>
           </div>
         </section>
@@ -732,45 +1041,69 @@ function Profile() {
               </strong>
             </div>
           </div>
-
-          <div className="flex items-center gap-3.5 p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
-            <div className="p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl">
+          <button
+            type="button"
+            onClick={() => openFollowModal("followers")}
+            className="cursor-pointer flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm  text-left hover:border-[#A04622]/40  hover:shadow-md transition active:scale-[0.98]"
+          >
+            <div
+              className="p-2.5 sm:p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl
+              shrink-0"
+            >
               <Users size={20} />
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-stone-500 font-medium">
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs text-stone-500 font-medium leading-tight">
                 Followers
               </span>
               <strong className="text-xl font-bold text-stone-900">
-                {user?.followers?.length || user?.stats?.followers || 0}
+                {followersCount}
               </strong>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3.5 p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
-            <div className="p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl">
-              <UserRoundCheck size={20} />
+          </button>
+          <button
+            type="button"
+            onClick={() => openFollowModal("following")}
+            className="cursor-pointer flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm  text-left hover:border-[#A04622]/40  hover:shadow-md transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3.5 p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
+              <div className="p-2.5 sm:p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl">
+                <UserRoundCheck size={20} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs text-stone-500 font-medium leading-tight">
+                  Following
+                </span>
+                <strong className="text-xl font-bold text-stone-900">
+                  {followingCount}
+                </strong>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-stone-500 font-medium">
-                Following
-              </span>
-              <strong className="text-xl font-bold text-stone-900">
-                {user?.following?.length || user?.stats?.following || 0}
-              </strong>
-            </div>
-          </div>
+          </button>
 
-          <div className="flex items-center gap-3.5 p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
-            <div className="p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl">
+          {/* <div className="flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
+            <div className="p-2.5 sm:p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl">
               <Flame size={20} />
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-stone-500 font-medium">
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs text-stone-500 font-medium leading-tight">
                 Builder Score
               </span>
               <strong className="text-xl font-bold text-stone-900">
                 {user?.stats?.builderScore || 0}
+              </strong>
+            </div>
+          </div> */}
+          <div className="flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
+            <div className="p-2.5 sm:p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl shrink-0">
+              <Flame size={20} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs text-stone-500 font-medium leading-tight">
+                Total Likes
+              </span>
+              <strong className="text-xl font-bold text-stone-900">
+                {totalLikes}
               </strong>
             </div>
           </div>
@@ -799,6 +1132,7 @@ function Profile() {
             </section>
 
             {/* JOURNEY TIMELINE */}
+            {/* JOURNEY TIMELINE */}
             <section className="bg-[#FAF8F5] p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[#7C2D12] font-bold text-lg font-serif">
@@ -826,7 +1160,6 @@ function Profile() {
                           index === 0 ? "bg-[#A04622]" : "bg-stone-400"
                         }`}
                       />
-
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-semibold text-stone-400 uppercase tracking-wide">
@@ -847,7 +1180,6 @@ function Profile() {
                           )}
                         </div>
 
-                        {/* TIMELINE ACTION BUTTONS */}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleEditTimelineItem(item)}
@@ -889,6 +1221,137 @@ function Profile() {
                   Experience" to add work experience.
                 </p>
               )}
+            </section>
+
+            {/* CONTENT TABS */}
+            <section className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
+              {/* ...unchanged, keep what's already there... */}
+            </section>
+            {/* CONTENT TABS */}
+            <section className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
+              <div className="flex overflow-x-auto border-b border-stone-100">
+                {[
+                  {
+                    key: "projects",
+                    label: "Projects",
+                    count: userProjects.length,
+                  },
+                  { key: "posts", label: "Posts", count: posts.length },
+                  { key: "reposts", label: "Reposts", count: reposts.length },
+                  { key: "likes", label: "Likes", count: likedItems.length },
+                  {
+                    key: "bookmarks",
+                    label: "Bookmarks",
+                    count: bookmarks.length,
+                  },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-4 py-3 text-sm font-semibold whitespace-nowrap transition border-b-2 ${
+                      activeTab === tab.key
+                        ? "text-[#A04622] border-[#A04622]"
+                        : "text-stone-500 border-transparent hover:text-stone-700"
+                    }`}
+                  >
+                    {tab.label}{" "}
+                    <span className="text-xs text-stone-400">
+                      ({tab.count})
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-6">
+                {activeTab === "projects" &&
+                  (userProjects.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {userProjects.map((project, index) => (
+                        <article
+                          key={project._id || project.id || index}
+                          className="group border border-stone-100 rounded-xl overflow-hidden hover:border-stone-300 transition"
+                        >
+                          <div className="h-36 bg-stone-100 overflow-hidden">
+                            <img
+                              src={
+                                project.image ||
+                                project.cover_image_url ||
+                                "https://images.unsplash.com/photo-1555066931-4365d14bab8c"
+                              }
+                              alt={project.title || project.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                            />
+                          </div>
+                          <div className="p-3.5 space-y-1">
+                            <h3 className="font-semibold text-stone-900 text-sm">
+                              {project.title || project.name}
+                            </h3>
+                            <p className="text-xs text-stone-500 line-clamp-2">
+                              {project.description ||
+                                "No description provided."}
+                            </p>
+                            <div className="flex items-center gap-3 pt-1 text-xs text-stone-400">
+                              <span>
+                                ❤ {project.likes_count || project.likes || 0}
+                              </span>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-stone-400 text-center py-10">
+                      No projects yet. Click "Create" to add one.
+                    </p>
+                  ))}
+
+                {activeTab === "posts" &&
+                  (postsLoading ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#A04622]" />
+                    </div>
+                  ) : posts.length > 0 ? (
+                    <div className="space-y-3">
+                      {posts.map((post, index) => (
+                        <article
+                          key={post._id || post.id || index}
+                          className="p-4 border border-stone-100 rounded-xl hover:border-stone-300 transition"
+                        >
+                          <h3 className="font-semibold text-stone-900 text-sm">
+                            {post.title}
+                          </h3>
+                          <p className="text-xs text-stone-500 line-clamp-3 mt-1">
+                            {post.content}
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-stone-400 text-center py-10">
+                      No posts yet. Click "Create" to write one.
+                    </p>
+                  ))}
+
+                {activeTab === "reposts" && (
+                  <p className="text-sm text-stone-400 text-center py-10">
+                    Reposts aren't available yet — this tab will populate once
+                    the reposts API is ready.
+                  </p>
+                )}
+                {activeTab === "likes" && (
+                  <p className="text-sm text-stone-400 text-center py-10">
+                    Liked content isn't available yet — this tab will populate
+                    once the likes API is ready.
+                  </p>
+                )}
+                {activeTab === "bookmarks" && (
+                  <p className="text-sm text-stone-400 text-center py-10">
+                    Bookmarks aren't available yet — this tab will populate once
+                    the bookmarks API is ready.
+                  </p>
+                )}
+              </div>
             </section>
 
             {/* SKILLS & TECH STACK */}
@@ -1390,55 +1853,477 @@ function Profile() {
             <div className="space-y-1">
               <h3 className="text-base font-bold text-stone-900">
                 {imageConfirm.type === "avatar"
-                ? "Change profile picture"
-                : "Change cover Image"
-                }
+                  ? "Change profile picture"
+                  : "Change cover Image"}
               </h3>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Are you sure you want to change your { " " }
-                {imageConfirm.type === "avatar" ? "profile picture" : "cover image"}?
+                Are you sure you want to change your{" "}
+                {imageConfirm.type === "avatar"
+                  ? "profile picture"
+                  : "cover image"}
+                ?
               </p>
             </div>
             <div className=" flex justify-center">
-                <img src={imageConfirm.preview} alt="New image preview" 
+              <img
+                src={imageConfirm.preview}
+                alt="New image preview"
                 className={
-                  imageConfirm.type === "avatar" 
-                  ? "w-28 h-28 rounded-2xl object-cover border border-stone-200"
-                  : "w-full h-28 rounded-xl object-cover border border-stone-200"
+                  imageConfirm.type === "avatar"
+                    ? "w-28 h-28 rounded-2xl object-cover border border-stone-200"
+                    : "w-full h-28 rounded-xl object-cover border border-stone-200"
                 }
-                />
+              />
             </div>
             <div className=" flex justify-end gap-2.5 pt-2">
-                <button 
+              <button
                 type="button"
                 onClick={cancelImageChange}
                 disabled={imageUploading}
                 className="px-4 py-2 text-xs text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-xl font-semibold transition cursor-pointer disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button 
+              >
+                Cancel
+              </button>
+              <button
                 type="button"
                 onClick={confirmImageChange}
                 disabled={imageUploading}
                 className="flex items-center gap-2 px-4 py-2 text-xs font-semibold  text-white bg-[#A04622] hover:bg-[#85381A] cursor-pointer rounded-xl shadow-xs transition active:scale-95 disabled:opacity-50"
-                >
-                  {imageUploading && <Loader2 size={14} className="animate-spin" />}
-                  <span>{imageUploading ? "Uploading" : "Confirm"}</span>
-                </button>
+              >
+                {imageUploading && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}
+                <span>{imageUploading ? "Uploading" : "Confirm"}</span>
+              </button>
             </div>
           </div>
         </div>
       )}
       {/* {Toast} */}
       {toast.text && (
-        <div className={`fixed bottom-4 right-4 z-[80] px-4 py-3 rounded-xl text-xs font-medium shadow-lg border ${
-          toast.type === "success"
-          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-          : "bg-rose-50 text-rose-800 border-rose-200"
-        }`}
+        <div
+          className={`fixed bottom-4 right-4 z-[80] px-4 py-3 rounded-xl text-xs font-medium shadow-lg border ${
+            toast.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              : "bg-rose-50 text-rose-800 border-rose-200"
+          }`}
         >
           {toast.text}
+        </div>
+      )}
+      {followModal.isOpen && (
+        <div
+          className="fixed inset-0 z-[65] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          onClick={closeFollowModal}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-md shadow-xl border border-stone-200 flex flex-col max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
+              <h3 className="text-base font-bold text-stone-900">
+                @{user?.username}
+              </h3>
+              <button
+                type="button"
+                onClick={closeFollowModal}
+                className="p-1 text-stone-400 hover:text-stone-700 rounded-lg transition cursor-pointer"
+                aria-label="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-stone-100">
+              <button
+                type="button"
+                onClick={() => switchFollowTab("following")}
+                className={`flex-1 py-3 text-sm font-semibold transition ${
+                  followModal.activeTab === "following"
+                    ? "text-[#A04622] border-b-2 border-[#A04622]"
+                    : "text-stone-400 hover:text-stone-600"
+                }`}
+              >
+                Following {followingCount}
+              </button>
+              <button
+                type="button"
+                onClick={() => switchFollowTab("followers")}
+                className={`flex-1 py-3 text-sm font-semibold transition ${
+                  followModal.activeTab === "followers"
+                    ? "text-[#A04622] border-b-2 border-[#A04622]"
+                    : "text-stone-400 hover:text-stone-600"
+                }`}
+              >
+                Followers {followersCount}
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-3 overflow-y-auto">
+              {followModal.loading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#A04622]" />
+                </div>
+              ) : followModal.error ? (
+                <p className="text-sm text-stone-500 text-center py-10">
+                  {followModal.error}
+                </p>
+              ) : (
+                (() => {
+                  const list =
+                    followModal.activeTab === "followers"
+                      ? followModal.followers
+                      : followModal.following;
+
+                  if (list.length === 0) {
+                    return (
+                      <p className="text-sm text-stone-400 text-center py-10">
+                        {followModal.activeTab === "followers"
+                          ? "No followers yet."
+                          : "Not following anyone yet."}
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <ul className="space-y-1">
+                      {list.map((u, index) => {
+                        const name =
+                          u.full_name || u.name || u.username || "Builder";
+                        const avatar =
+                          u.avatar_url ||
+                          u.avatar ||
+                          u.avatarUrl ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=A04622&color=fff`;
+
+                        return (
+                          <li
+                            key={u.id || u._id || index}
+                            className="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-stone-50 transition"
+                          >
+                            <Link
+                              to={`/profile/${u.username}`}
+                              onClick={closeFollowModal}
+                              className="flex items-center gap-3 min-w-0 flex-1"
+                            >
+                              <img
+                                src={avatar}
+                                alt={name}
+                                className="w-10 h-10 rounded-full object-cover border border-stone-200 shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-stone-900 truncate">
+                                  {name}
+                                </p>
+                                <p className="text-xs text-stone-500 truncate">
+                                  @{u.username}
+                                </p>
+                              </div>
+                            </Link>
+                            <span className="shrink-0 px-3 py-1.5 text-xs font-semibold text-stone-700 bg-stone-100 rounded-lg">
+                              {followModal.activeTab === "followers"
+                                ? "Follower"
+                                : "Following"}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  );
+                })()
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* CREATE CHOOSER */}
+      {createChooserOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          onClick={() => setCreateChooserOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-6 space-y-3 border border-stone-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-bold text-stone-900">
+              What do you want to create?
+            </h3>
+            <button
+              type="button"
+              onClick={() => {
+                setCreateChooserOpen(false);
+                setCreateProjectOpen(true);
+              }}
+              className="w-full flex items-center gap-3 p-3 border border-stone-200 rounded-xl hover:border-[#A04622]/40 hover:bg-[#FDF4F0] transition text-left"
+            >
+              <Folder size={18} className="text-[#A04622]" />
+              <div>
+                <p className="text-sm font-semibold text-stone-900">Project</p>
+                <p className="text-xs text-stone-500">
+                  A build with a title, description and links.
+                </p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCreateChooserOpen(false);
+                setCreatePostOpen(true);
+              }}
+              className="w-full flex items-center gap-3 p-3 border border-stone-200 rounded-xl hover:border-[#A04622]/40 hover:bg-[#FDF4F0] transition text-left"
+            >
+              <Edit2 size={18} className="text-[#A04622]" />
+              <div>
+                <p className="text-sm font-semibold text-stone-900">Post</p>
+                <p className="text-xs text-stone-500">
+                  A quick update, write-up, or announcement.
+                </p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateChooserOpen(false)}
+              className="w-full py-2 text-xs font-semibold text-stone-500 hover:text-stone-800 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE PROJECT MODAL */}
+      {createProjectOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl p-6 space-y-4 border border-stone-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-stone-900">
+                Post New Project
+              </h3>
+              <button
+                onClick={() => {
+                  if (projectCoverPreview) URL.revokeObjectURL(projectCoverPreview);
+                  setProjectCoverPreview("");
+                  setCreateProjectOpen(false);
+                }}
+                className="p-1 text-stone-400 hover:text-stone-700 rounded-lg cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {createError && (
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-800 border border-rose-200/60 text-xs font-medium">
+                {createError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              
+              <div>
+                <label className="block text-sm font-semibold text-stone-800 mb-1">
+                Project Title <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Project title"
+                value={projectForm.title}
+                onChange={(e) =>
+                  setProjectForm((p) => ({ ...p, title: e.target.value }))
+                }
+                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+              />
+              </div>
+              <div>
+              <label className="block font-semibold text-stone-700 mb-1">
+                Tagline *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Autonomous runtime engine"
+                value={projectForm.tagLine}
+                onChange={(e) =>
+                  setProjectForm((p) => ({ ...p, tagLine: e.target.value }))
+                }
+                className="w-full bg-[#F7F4F0] p-3 rounded-xl border border-stone-200 focus:outline-none focus:border-[#A04622]"
+              />
+              <div>
+                <label className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-xl cursor-pointer text-xs font-semibold text-stone-700">
+                  Project Display Image
+                </label>
+                <button
+                type="button"
+                onClick={() => projectCoverInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-stone-300 rounded-xl bg-stone-50 hover:border-stone-400 transition cursor-pointer overflow-hidden"
+                >
+                  {projectCoverPreview ? (
+                    <img src={projectCoverPreview} alt="Cover Preview" 
+                    className="w-full h-40 object-cover"
+                    />
+                  ): (
+                    <div className="flex flex-col items-center justify-center gap-2 py-10">
+                      <UploadCloud size={14} />
+                      <p className="text-sm font-medium text-stone-600">\
+                        Click to Upload Project cover image
+                      </p>
+                      <p className="text-xs text-stone-400">
+                        PNG, JPG, WebP up to 5MB
+                      </p>
+                    </div>
+                  )}
+                </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleProjectCoverSelect}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-stone-800 mb-1.5">
+                  Demo URL / Video Link
+                </label>
+                <input
+                type="text"
+                placeholder="Live URL"
+                value={projectForm.demo_url}
+                onChange={(e) =>
+                  setProjectForm((p) => ({ ...p, demo_url: e.target.value }))
+                }
+                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+              />
+              </div>
+            </div>
+              <textarea
+                rows={3}
+                placeholder="Description"
+                value={projectForm.description}
+                onChange={(e) =>
+                  setProjectForm((p) => ({ ...p, description: e.target.value }))
+                }
+                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm resize-none"
+              />
+              <input
+                type="text"
+                placeholder="Technologies (comma separated)"
+                value={projectForm.technologies}
+                onChange={(e) =>
+                  setProjectForm((p) => ({
+                    ...p,
+                    technologies: e.target.value,
+                  }))
+                }
+                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+              />
+              
+              <input
+                type="text"
+                placeholder="Github Repository URL"
+                value={projectForm.repo_url}
+                onChange={(e) =>
+                  setProjectForm((p) => ({ ...p, repo_url: e.target.value }))
+                }
+                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+              />
+              
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setCreateProjectOpen(false)}
+                className="px-4 py-2.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProject}
+                disabled={creating}
+                className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-[#A04622] hover:bg-[#85381a] rounded-xl disabled:opacity-50"
+              >
+                {creating && <Loader2 size={14} className="animate-spin" />}
+                <span>{creating ? "Publishing..." : "Publish Project"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE POST MODAL */}
+      {createPostOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl p-6 space-y-4 border border-stone-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-stone-900">New Post</h3>
+              <button
+                onClick={() => setCreatePostOpen(false)}
+                className="p-1 text-stone-400 hover:text-stone-700 rounded-lg cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {createError && (
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-800 border border-rose-200/60 text-xs font-medium">
+                {createError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Post title"
+                value={postForm.title}
+                onChange={(e) =>
+                  setPostForm((p) => ({ ...p, title: e.target.value }))
+                }
+                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+              />
+              <textarea
+                rows={5}
+                placeholder="What's on your mind?"
+                value={postForm.content}
+                onChange={(e) =>
+                  setPostForm((p) => ({ ...p, content: e.target.value }))
+                }
+                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm resize-none"
+              />
+              <label className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-xl cursor-pointer text-xs font-semibold text-stone-700">
+                <UploadCloud size={14} />
+                <span>
+                  {postForm.image ? postForm.image.name : "Image (optional)"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    setPostForm((p) => ({ ...p, image: e.target.files[0] }))
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setCreatePostOpen(false)}
+                className="px-4 py-2.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreatePost}
+                disabled={creating}
+                className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-[#A04622] hover:bg-[#85381a] rounded-xl disabled:opacity-50"
+              >
+                {creating && <Loader2 size={14} className="animate-spin" />}
+                <span>{creating ? "Publishing..." : "Publish Post"}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </MainLayout>
