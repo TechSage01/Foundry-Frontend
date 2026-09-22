@@ -6,7 +6,6 @@ import {
   Github,
   ChevronDown,
   Eye,
-  Github,
   Info,
   Link as LinkIcon,
   Minus,
@@ -755,15 +754,68 @@ Describe what this community exists to build, explore, or discuss.
                         <Check size={12} />
                       )}
                     </span>
+                    <span>
+                      {item.label}
+                    </span>
                       </div>
                     ))}
                   </div>
+            </section>
+            <section className="community-side-card launch-card">
+                    <div className="launch-warning">
+                      <Info size={17} />
+                      <p>Launching creates a public directory entry and opens the communiy for membership requests.</p>
+                    </div>
+                    <button
+                      type="submit"
+                      className="launch-primary-button"
+                    >
+                      <Sparkles size={16} />
+                      Found Community &amp; Launch Pod
+                    </button>
+                    <button
+                      type="button"
+                      className="launch-secondary-button"
+                      onClick={handleSaveDraft}
+                    >
+                      <Save size={16} />
+                      Save Pod Draft
+                    </button>
+            </section>
+            <section className="community-side-card architect-card">
+              <span className="side-card eyebrow">
+                ARCHITECT LEAD
+              </span>
+              <div className="architect-profile">
+                <div className="architect-avatar">
+                    AV
+                </div>
+                <div>
+                  <h3>Alex Vance</h3>
+                  <p>Foundry Rep Score:
+                    <strong>850</strong>
+                    <span>Verified</span>
+                  </p>
+                </div>
+              </div>
+              <div className="architect-divider" />
+                <div className="architect-meta">
+                  <span>
+                    <ShieldCheck size={14} />
+                    Verified Builder
+                  </span>
+                  <span>
+                    <Users size={14} />
+                    Community Lead
+                  </span>
+                </div>
+              
             </section>
           </aside>
         </form>
       </div>
     </MainLayout>
-  );
+  )
 }
 
-export default CreateCommunity;
+export default CreateCommunity
