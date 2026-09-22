@@ -1265,9 +1265,11 @@ function Profile() {
                 {activeTab === "projects" &&
                   (userProjects.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {userProjects.map((project, index) => (
-                        <article
-                          key={project._id || project.id || index}
+                      {userProjects.map((project, index) => {
+                        const projectId = project._id || project.id;
+                        <Link
+                        to={`/projects/${projectId}`}
+                          key={projectId || index}
                           className="group border border-stone-100 rounded-xl overflow-hidden hover:border-stone-300 transition"
                         >
                           <div className="h-36 bg-stone-100 overflow-hidden">
@@ -1295,8 +1297,8 @@ function Profile() {
                               </span>
                             </div>
                           </div>
-                        </article>
-                      ))}
+                        </Link>
+})}
                     </div>
                   ) : (
                     <p className="text-sm text-stone-400 text-center py-10">
@@ -1386,10 +1388,12 @@ function Profile() {
 
             {userProjects && userProjects.length > 0 ? (
               <div className="space-y-4">
-                {userProjects.slice(0, 3).map((project, index) => (
-                  <article
+                {userProjects.slice(0, 3).map((project, index) => {
+                  const projectId = project._id || project.id;
+                  <Link
+                    to={`/projects/${projectId}`}
                     className="group border border-stone-100 rounded-xl overflow-hidden hover:border-stone-300 transition"
-                    key={project._id || project.id || index}
+                    key={projectId || index}
                   >
                     <div className="h-32 bg-stone-100 overflow-hidden">
                       <img
@@ -1410,8 +1414,8 @@ function Profile() {
                         {project.description || "No description provided."}
                       </p>
                     </div>
-                  </article>
-                ))}
+                  </Link>
+})}
 
                 {userProjects.length > 3 && (
                   <Link
