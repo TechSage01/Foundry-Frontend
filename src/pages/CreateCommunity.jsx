@@ -725,11 +725,38 @@ Describe what this community exists to build, explore, or discuss.
                           FOUNDING READINESS
                       </span>
                       <h2>
-                        {readinessPercentage}
+                        {readinessPercentage}%
                         Complete
                       </h2>
                     </div>
-                    <span></span>
+                    <span className="readiness-icon">
+                        <Check size={17} />
+                    </span>
+                  </div>
+                  <div className="readiness-progress">
+                    <div
+                  className="readiness-progress-bar"
+                  style={{
+                    width: `${readinessPercentage}%`,
+                  }}
+                />
+                  </div>
+                  <div className="readiness-list">
+                    {readinessItems.map((item) => (
+                      <div className="readiness-item" key={item.label}>
+                        <span
+                      className={
+                        item.complete
+                          ? 'readiness-check complete'
+                          : 'readiness-check'
+                      }
+                    >
+                      {item.complete && (
+                        <Check size={12} />
+                      )}
+                    </span>
+                      </div>
+                    ))}
                   </div>
             </section>
           </aside>
