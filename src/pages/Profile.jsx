@@ -53,7 +53,7 @@ function Profile() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [createChooserOpen, setCreateChooserOpen] = useState(false);
-  const [projectCoverPreview, setProjectCoverPreview] = useState(false);  
+  const [projectCoverPreview, setProjectCoverPreview] = useState(false);
   const [projectForm, setProjectForm] = useState({
     title: "",
     tagLine: "",
@@ -101,7 +101,7 @@ function Profile() {
     message: "",
     onConfirm: null,
   });
-  const projectCoverInputRef = useRef(null)
+  const projectCoverInputRef = useRef(null);
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
   const [imageConfirm, setImageConfirm] = useState({
@@ -200,14 +200,14 @@ function Profile() {
     });
   };
   const CATEGORY_OPTIONS = [
-      "AI_ML",
-      "Web_Development",
-      "Mobile",
-      "DevOps",
-      "Graphic_Design",
-      "Data_Science",
-      "Other",
-    ];
+    "AI_ML",
+    "Web_Development",
+    "Mobile",
+    "DevOps",
+    "Graphic_Design",
+    "Data_Science",
+    "Other",
+  ];
 
   const handleCreateProject = async () => {
     if (!projectForm.title.trim() || !projectForm.tagLine.trim()) {
@@ -253,9 +253,8 @@ function Profile() {
         repo_url: "",
         cover_image: null,
         category: "AI & ML",
-
       });
-      setProjectCoverPreview("")
+      setProjectCoverPreview("");
       setCreateProjectOpen(false);
       showToast("success", "Project published successfully.");
     } catch (error) {
@@ -592,10 +591,10 @@ function Profile() {
     });
   };
   const handleProjectCoverSelect = (e) => {
-    const file =  e.target.files?.[0];
+    const file = e.target.files?.[0];
     e.target.value = "";
-    if(!file) return;
-    if(!file.type.startsWith("image/")) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
       showToast("error", "Please select a valid image file.");
       return;
     }
@@ -606,10 +605,10 @@ function Profile() {
       );
       return;
     }
-    if(projectCoverPreview) URL.revokeObjectURL(projectCoverPreview);
+    if (projectCoverPreview) URL.revokeObjectURL(projectCoverPreview);
     setProjectForm((p) => ({ ...p, cover_image: file }));
     setProjectCoverPreview(URL.createObjectURL(file));
-  }
+  };
   const cancelImageChange = async () => {
     if (imageConfirm.preview) URL.revokeObjectURL(imageConfirm.preview);
     setImageConfirm({
@@ -910,7 +909,7 @@ function Profile() {
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
         {/* HERO HEADER */}
         <section className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
-          <div className="relative h-48 md:h-60 bg-stone-100">
+          <div className="relative h-52 md:h-64 bg-stone-100">
             <img
               src={
                 coverPreview ||
@@ -1021,7 +1020,6 @@ function Profile() {
               >
                 <Share2 size={18} />
               </button>
-              
             </div>
           </div>
         </section>
@@ -2105,7 +2103,8 @@ function Profile() {
               </h3>
               <button
                 onClick={() => {
-                  if (projectCoverPreview) URL.revokeObjectURL(projectCoverPreview);
+                  if (projectCoverPreview)
+                    URL.revokeObjectURL(projectCoverPreview);
                   setProjectCoverPreview("");
                   setCreateProjectOpen(false);
                 }}
@@ -2122,53 +2121,55 @@ function Profile() {
             )}
 
             <div className="space-y-4">
-              
               <div>
                 <label className="block text-sm font-semibold text-stone-800 mb-1">
-                Project Title <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Project title"
-                value={projectForm.title}
-                onChange={(e) =>
-                  setProjectForm((p) => ({ ...p, title: e.target.value }))
-                }
-                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
-              />
+                  Project Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Project title"
+                  value={projectForm.title}
+                  onChange={(e) =>
+                    setProjectForm((p) => ({ ...p, title: e.target.value }))
+                  }
+                  className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+                />
               </div>
               <div>
-              <label className="block font-semibold text-stone-700 mb-1">
-                Tagline *
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Autonomous runtime engine"
-                value={projectForm.tagLine}
-                onChange={(e) =>
-                  setProjectForm((p) => ({ ...p, tagLine: e.target.value }))
-                }
-                className="w-full bg-[#F7F4F0] p-3 rounded-xl border border-stone-200 focus:outline-none focus:border-[#A04622]"
-              />
+                <label className="block font-semibold text-stone-700 mb-1">
+                  Tagline  <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Autonomous runtime engine"
+                  value={projectForm.tagLine}
+                  onChange={(e) =>
+                    setProjectForm((p) => ({ ...p, tagLine: e.target.value }))
+                  }
+                  className="w-full bg-stone-50/50 p-3 rounded-xl border border-stone-200 "
+                />
+              </div>
               <div>
                 <label className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-xl cursor-pointer text-xs font-semibold text-stone-700">
                   Project Display Image
                 </label>
                 <button
-                type="button"
-                onClick={() => projectCoverInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-stone-300 rounded-xl bg-stone-50 hover:border-stone-400 transition cursor-pointer overflow-hidden"
+                  type="button"
+                  onClick={() => projectCoverInputRef.current?.click()}
+                  className="w-full border-2 border-dashed border-stone-300 rounded-xl bg-stone-50 hover:border-stone-400 transition cursor-pointer overflow-hidden"
                 >
                   {projectCoverPreview ? (
-                    <img src={projectCoverPreview} alt="Cover Preview" 
-                    className="w-full h-40 object-cover"
+                    <img
+                      src={projectCoverPreview}
+                      alt="Cover Preview"
+                      className="w-full h-40 object-cover"
                     />
-                  ): (
+                  ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-10">
                       <UploadCloud size={14} />
-                      <p className="text-sm font-medium text-stone-600">\
-                        Click to Upload Project cover image
+                      <p className="text-sm font-medium text-stone-600">
+                         Click to Upload Project cover image
                       </p>
                       <p className="text-xs text-stone-400">
                         PNG, JPG, WebP up to 5MB
@@ -2188,53 +2189,100 @@ function Profile() {
                   Demo URL / Video Link
                 </label>
                 <input
-                type="text"
-                placeholder="Live URL"
-                value={projectForm.demo_url}
-                onChange={(e) =>
-                  setProjectForm((p) => ({ ...p, demo_url: e.target.value }))
-                }
-                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
-              />
+                  type="text"
+                  placeholder="Live URL"
+                  value={projectForm.demo_url}
+                  onChange={(e) =>
+                    setProjectForm((p) => ({
+                      ...p,
+                      demo_url: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-stone-800 mb-1.5">
+                  GitHub Repository URL
+                </label>
+                <input
+                  type="text"
+                  placeholder="Github Repository URL"
+                  value={projectForm.repo_url}
+                  onChange={(e) =>
+                    setProjectForm((p) => ({
+                      ...p,
+                      repo_url: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-stone-800 mb-1.5 ">
+                  Technologies used (comma seperated)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Technologies (comma separated)"
+                  value={projectForm.technologies}
+                  onChange={(e) =>
+                    setProjectForm((p) => ({
+                      ...p,
+                      technologies: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">
+                  Category
+                </label>
+                <select
+                  value={projectForm.category}
+                  onChange={(e) =>
+                    setProjectForm((p) => ({
+                      ...p,
+                      category: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
+                >
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-stone-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Provide Project details..."
+                  value={projectForm.description}
+                  onChange={(e) =>
+                    setProjectForm({
+                      ...projectForm,
+                      description: e.target.value,
+                    })
+                  }
+                  className="w-full bg-stone-50/50 p-3 rounded-xl border border-stone-200 focus:outline-none focus:border-[#A04622] resize-none"
+                />
               </div>
             </div>
-              <textarea
-                rows={3}
-                placeholder="Description"
-                value={projectForm.description}
-                onChange={(e) =>
-                  setProjectForm((p) => ({ ...p, description: e.target.value }))
-                }
-                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm resize-none"
-              />
-              <input
-                type="text"
-                placeholder="Technologies (comma separated)"
-                value={projectForm.technologies}
-                onChange={(e) =>
-                  setProjectForm((p) => ({
-                    ...p,
-                    technologies: e.target.value,
-                  }))
-                }
-                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
-              />
-              
-              <input
-                type="text"
-                placeholder="Github Repository URL"
-                value={projectForm.repo_url}
-                onChange={(e) =>
-                  setProjectForm((p) => ({ ...p, repo_url: e.target.value }))
-                }
-                className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
-              />
-              
-            </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-2 border-t border-stone-100">
               <button
-                onClick={() => setCreateProjectOpen(false)}
+                onClick={() => {
+                  if (projectCoverPreview) URL.revokeObjectURL(projectCoverPreview);
+                  setProjectCoverPreview("");
+                  setCreateProjectOpen(false);
+                }}
                 className="px-4 py-2.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl"
               >
                 Cancel
