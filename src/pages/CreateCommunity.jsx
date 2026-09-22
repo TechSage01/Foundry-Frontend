@@ -1,15 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowLeft,
   Check,
-  Github,
   ChevronDown,
   Eye,
   Info,
   Link as LinkIcon,
-  Minus,
-  Plus,
   Save,
   Send,
   ShieldCheck,
@@ -18,8 +14,8 @@ import {
   X,
   ArrowUpRight,
 } from "lucide-react";
-
 import MainLayout from "../components/layout/MainLayout";
+import "./CreateCommunity.css";
 
 const domains = [
   "Systems Programming",
@@ -65,6 +61,7 @@ function CreateCommunity() {
   const [liveSync, setLiveSync] = useState("");
   const [githubLink, setGithubLink] = useState("");
   const [communityLink, setCommunityLink] = useState("");
+
   const addTechToken = () => {
     const token = techInput.trim();
 
@@ -93,11 +90,14 @@ function CreateCommunity() {
       removeTechToken(techStack[techStack.length - 1]);
     }
   };
-  const previewName = communityName.trim() || "Your CommunityName";
 
-  const previewSlug = slug.trim() || "your community";
+  const previewName = communityName.trim() || "Your Community Name";
+
+  const previewSlug = slug.trim() || "your-community";
+
   const previewTagline =
     tagline.trim() || "Your community mission will appear here";
+
   const previewMembership = membershipType || "Open Guild";
 
   const readinessItems = useMemo(
@@ -138,12 +138,15 @@ function CreateCommunity() {
       communityLink,
     ],
   );
+
   const completedReadiness = readinessItems.filter(
     (item) => item.complete,
   ).length;
+
   const readinessPercentage = Math.round(
     (completedReadiness / readinessItems.length) * 100,
   );
+
   const handleLaunch = (event) => {
     event.preventDefault();
 
@@ -165,6 +168,7 @@ function CreateCommunity() {
       githubLink,
       communityLink,
     };
+
     console.log("Launch community:", communityData);
   };
 
@@ -187,8 +191,10 @@ function CreateCommunity() {
       githubLink,
       communityLink,
     };
+
     console.log("Save draft:", draftData);
   };
+
   const handleDiscard = () => {
     setCommunityName("");
     setSlug("");
@@ -216,9 +222,11 @@ function CreateCommunity() {
             <Link to="/communities">Communities</Link>
             <span>/</span>
           </div>
+
           <div className="create-community-save-status">
             <span className="autosave-dot" />
             <span>Draft autosaved 1m ago</span>
+
             <button
               type="button"
               className="discard-button"
@@ -228,9 +236,11 @@ function CreateCommunity() {
             </button>
           </div>
         </div>
+
         <header className="create-community-header">
           <div>
             <h1>Create a Technical Community</h1>
+
             <p>
               Assemble an engineering guild, working group or peer-review pod
               centered around specific architectures, low-level tooling, and
@@ -238,6 +248,7 @@ function CreateCommunity() {
             </p>
           </div>
         </header>
+
         <form className="create-community-layout" onSubmit={handleLaunch}>
           <main className="create-community-main">
             <section className="community-form-section">
@@ -254,6 +265,7 @@ function CreateCommunity() {
                   </p>
                 </div>
               </div>
+
               <div className="form-field">
                 <div className="field-label-row">
                   <label htmlFor="community-name">Community Name</label>
@@ -278,6 +290,7 @@ function CreateCommunity() {
 
                 <div className="slug-input-wrapper">
                   <span className="slug-prefix">foundry.network/c/</span>
+
                   <input
                     id="community-slug"
                     name="slug"
@@ -319,6 +332,7 @@ function CreateCommunity() {
                   required
                 />
               </div>
+
               <div className="form-field">
                 <label>Technical Domain</label>
 
@@ -376,6 +390,7 @@ function CreateCommunity() {
                 </span>
               </div>
             </section>
+
             <section className="community-form-section">
               <div className="form-section-heading">
                 <div>
@@ -451,6 +466,7 @@ function CreateCommunity() {
                         repository.
                       </span>
                     </div>
+
                     <input
                       type="checkbox"
                       checked={repositoryContribution}
@@ -459,6 +475,7 @@ function CreateCommunity() {
                       }
                     />
                   </label>
+
                   <label className="verification-item">
                     <div>
                       <strong>Foundry Network Signal ≥ 400</strong>
@@ -479,14 +496,17 @@ function CreateCommunity() {
                 </div>
               </div>
             </section>
+
             <section className="community-form-section">
               <div className="form-section-heading">
                 <div>
                   <div className="section-title-row">
                     <h2>Charter &amp; Working Principles</h2>
                   </div>
+
                   <p>Establish the principles and expectations for members.</p>
                 </div>
+
                 <div className="editor-mode-toggle">
                   <button
                     type="button"
@@ -495,31 +515,46 @@ function CreateCommunity() {
                   >
                     Write
                   </button>
-                  <button type="button" className={charterMode === "preview"}>
+
+                  <button
+                    type="button"
+                    className={charterMode === "preview" ? "active" : ""}
+                    onClick={() => setCharterMode("preview")}
+                  >
                     <Eye size={14} />
                     Preview
                   </button>
                 </div>
               </div>
+
               {charterMode === "write" ? (
                 <div className="charter-editor">
                   <div className="editor-toolbar">
                     <button type="button">H1</button>
+
                     <button type="button">H2</button>
+
                     <button type="button">
                       <strong>B</strong>
                     </button>
+
                     <button type="button">
                       <em>I</em>
                     </button>
+
                     <button type="button">``</button>
+
                     <span />
+
                     <button type="button">•</button>
+
                     <button type="button">1.</button>
+
                     <button type="button">
                       <LinkIcon size={14} />
                     </button>
                   </div>
+
                   <textarea
                     name="charter"
                     value={charter}
@@ -531,7 +566,9 @@ Describe what this community exists to build, explore, or discuss.
 ## Working Principles
 
 - What should members contribute?
+
 - How should members collaborate?
+
 - What makes this community high-signal?`}
                     rows={13}
                   />
@@ -546,30 +583,35 @@ Describe what this community exists to build, explore, or discuss.
                       ))
                   ) : (
                     <p className="empty-preview">
-                      Your charter preview will appear here as your write.
+                      Your charter preview will appear here as you write.
                     </p>
                   )}
                 </div>
               )}
             </section>
+
             <section className="community-form-section">
               <div className="form-section-heading">
                 <div>
                   <div className="section-title-row">
                     <h2>Sync Cadence &amp; Channels</h2>
-                    <span className="section-badge-optional">
-                      Optional
-                    </span>
+
+                    <span className="section-badge-optional">Optional</span>
                   </div>
-                  <p>Give members clear places and rhythms for collaboration.</p>
+
+                  <p>
+                    Give members clear places and rhythms for collaboration.
+                  </p>
                 </div>
               </div>
+
               <div className="sync-fields">
                 <div className="form-field">
                   <label htmlFor="discussion-topics">
                     Default Discussion Topics
                   </label>
-                  <input 
+
+                  <input
                     id="discussion-topics"
                     name="discussionTopics"
                     type="text"
@@ -580,66 +622,68 @@ Describe what this community exists to build, explore, or discuss.
                     placeholder="e.g. architecture, tooling, research"
                   />
                 </div>
+
                 <div className="form-field">
-                  <label htmlFor="live-sync">
-                    Live Architecture Sync
-                  </label>
+                  <label htmlFor="live-sync">Live Architecture Sync</label>
+
                   <div className="select-wrapper">
-                    <select 
-                      name="liveSync" 
+                    <select
+                      name="liveSync"
                       id="live-sync"
                       value={liveSync}
-                      onChange={(event) =>
-                        setLiveSync(event.target.value)
-                      }
-                      >
-                        <option value="">Select cadence</option>
-                        <option value="Weekly">Weekly</option>
-                        <option value="Bi-weekly">Bi-weekly</option>
-                        <option value="Monthly">Monthly</option>
-                        <option value="No fixed cadence">No fixed cadence</option>
-                      </select>
-                      <ChevronDown size={16} />
+                      onChange={(event) => setLiveSync(event.target.value)}
+                    >
+                      <option value="">Select cadence</option>
+                      <option value="Weekly">Weekly</option>
+                      <option value="Bi-weekly">Bi-weekly</option>
+                      <option value="Monthly">Monthly</option>
+                      <option value="No fixed cadence">No fixed cadence</option>
+                    </select>
+
+                    <ChevronDown size={16} />
                   </div>
                 </div>
+
                 <div className="form-field">
                   <label htmlFor="github-link">
                     Github Organization / Repo
                   </label>
+
                   <div className="input-with-icon">
-                    <Github size={16} />
-                    <input 
+                    <LinkIcon size={16} />
+
+                    <input
                       id="github-link"
                       name="githubLink"
                       type="url"
                       value={githubLink}
-                      onChange={(event) =>
-                        setGithubLink(event.target.value)
-                      }
+                      onChange={(event) => setGithubLink(event.target.value)}
                       placeholder="https://github.com/..."
                     />
                   </div>
                 </div>
+
                 <div className="form-field">
                   <label htmlFor="community-link">
                     Matrix Room / Discord Link
                   </label>
+
                   <div className="input-with-icon">
                     <LinkIcon size={16} />
-                    <input 
+
+                    <input
                       id="community-link"
                       name="communityLink"
                       type="url"
                       value={communityLink}
-                      onChange={(event) =>
-                        setCommunityLink(event.target.value)
-                      }
+                      onChange={(event) => setCommunityLink(event.target.value)}
                       placeholder="https://discord.gg/..."
                     />
                   </div>
                 </div>
               </div>
             </section>
+
             <div className="create-community-form-actions">
               <button
                 type="button"
@@ -649,173 +693,175 @@ Describe what this community exists to build, explore, or discuss.
                 <Save size={16} />
                 Save Pod Draft
               </button>
-              <button
-                type="submit"
-                className="launch-community-button"
-              >
+
+              <button type="submit" className="launch-community-button">
                 <Send size={16} />
                 Found Community &amp; Launch Pod
               </button>
             </div>
           </main>
+
           <aside className="create-community-sidebar">
             <section className="community-side-card preview-card">
               <div className="side-card-header">
                 <div>
-                  <span className="side-card-eyebrow">
-                    DIRECTORY PREVIEW
-                  </span>
+                  <span className="side-card-eyebrow">DIRECTORY PREVIEW</span>
+
                   <h2>Live Preview</h2>
                 </div>
+
                 <span className="live-status">
                   <span />
                   Live
                 </span>
               </div>
-               <p className="preview-description">
-                This is how your community will appear
-                in the Foundry directory.
+
+              <p className="preview-description">
+                This is how your community will appear in the Foundry directory.
               </p>
+
               <div className="directory-preview">
                 <div className="preview-icon">
                   <Sparkles size={22} />
                 </div>
+
                 <div className="preview-main">
                   <div className="preview-title-row">
                     <h3>{previewName}</h3>
-                    <span>
-                      {previewMembership}
-                    </span>
+
+                    <span>{previewMembership}</span>
                   </div>
+
                   <p>{previewTagline}</p>
+
                   <div className="preview-slug">
-                    foundry.network/c/ 
-                    {previewSlug}
+                    foundry.network/c/ {previewSlug}
                   </div>
+
                   {techStack.length > 0 && (
                     <div className="preview-tags">
-
-                      {techStack
-                        .slice(0, 5)
-                        .map((token) => (
-                          <span key={token}>
-                            {token}
-                          </span>
-                        ))}
-                        </div>
+                      {techStack.slice(0, 5).map((token) => (
+                        <span key={token}>{token}</span>
+                      ))}
+                    </div>
                   )}
+
                   <div className="preview-footer">
                     <span>
-                      <Users size={14} />
-                      0 members
+                      <Users size={14} />0 members
                     </span>
+
                     <button type="button">
                       Request to Join Pod
-                      <ArrowUpRight size={14}/>
+                      <ArrowUpRight size={14} />
                     </button>
                   </div>
                 </div>
               </div>
             </section>
+
             <section className="community-side-card readiness-card">
-                  <div className="side-card-header">
-                    <div>
-                      <span className="side-card-eyebrow">
-                          FOUNDING READINESS
-                      </span>
-                      <h2>
-                        {readinessPercentage}%
-                        Complete
-                      </h2>
-                    </div>
-                    <span className="readiness-icon">
-                        <Check size={17} />
-                    </span>
-                  </div>
-                  <div className="readiness-progress">
-                    <div
+              <div className="side-card-header">
+                <div>
+                  <span className="side-card-eyebrow">FOUNDING READINESS</span>
+
+                  <h2>{readinessPercentage}% Complete</h2>
+                </div>
+
+                <span className="readiness-icon">
+                  <Check size={17} />
+                </span>
+              </div>
+
+              <div className="readiness-progress">
+                <div
                   className="readiness-progress-bar"
                   style={{
                     width: `${readinessPercentage}%`,
                   }}
                 />
-                  </div>
-                  <div className="readiness-list">
-                    {readinessItems.map((item) => (
-                      <div className="readiness-item" key={item.label}>
-                        <span
+              </div>
+
+              <div className="readiness-list">
+                {readinessItems.map((item) => (
+                  <div className="readiness-item" key={item.label}>
+                    <span
                       className={
                         item.complete
-                          ? 'readiness-check complete'
-                          : 'readiness-check'
+                          ? "readiness-check complete"
+                          : "readiness-check"
                       }
                     >
-                      {item.complete && (
-                        <Check size={12} />
-                      )}
+                      {item.complete && <Check size={12} />}
                     </span>
-                    <span>
-                      {item.label}
-                    </span>
-                      </div>
-                    ))}
+
+                    <span>{item.label}</span>
                   </div>
+                ))}
+              </div>
             </section>
+
             <section className="community-side-card launch-card">
-                    <div className="launch-warning">
-                      <Info size={17} />
-                      <p>Launching creates a public directory entry and opens the communiy for membership requests.</p>
-                    </div>
-                    <button
-                      type="submit"
-                      className="launch-primary-button"
-                    >
-                      <Sparkles size={16} />
-                      Found Community &amp; Launch Pod
-                    </button>
-                    <button
-                      type="button"
-                      className="launch-secondary-button"
-                      onClick={handleSaveDraft}
-                    >
-                      <Save size={16} />
-                      Save Pod Draft
-                    </button>
+              <div className="launch-warning">
+                <Info size={17} />
+
+                <p>
+                  Launching creates a public directory entry and opens the
+                  community for membership requests.
+                </p>
+              </div>
+
+              <button type="submit" className="launch-primary-button">
+                <Sparkles size={16} />
+                Found Community &amp; Launch Pod
+              </button>
+
+              <button
+                type="button"
+                className="launch-secondary-button"
+                onClick={handleSaveDraft}
+              >
+                <Save size={16} />
+                Save Pod Draft
+              </button>
             </section>
+
             <section className="community-side-card architect-card">
-              <span className="side-card eyebrow">
-                ARCHITECT LEAD
-              </span>
+              <span className="side-card-eyebrow">ARCHITECT LEAD</span>
+
               <div className="architect-profile">
-                <div className="architect-avatar">
-                    AV
-                </div>
+                <div className="architect-avatar">AV</div>
+
                 <div>
                   <h3>Alex Vance</h3>
-                  <p>Foundry Rep Score:
+
+                  <p>
+                    Foundry Rep Score:
                     <strong>850</strong>
                     <span>Verified</span>
                   </p>
                 </div>
               </div>
+
               <div className="architect-divider" />
-                <div className="architect-meta">
-                  <span>
-                    <ShieldCheck size={14} />
-                    Verified Builder
-                  </span>
-                  <span>
-                    <Users size={14} />
-                    Community Lead
-                  </span>
-                </div>
-              
+
+              <div className="architect-meta">
+                <span>
+                  <ShieldCheck size={14} />
+                  Verified Builder
+                </span>
+
+                <span>
+                  <Users size={14} />
+                  Community Lead
+                </span>
+              </div>
             </section>
           </aside>
         </form>
       </div>
     </MainLayout>
-  )
+  );
 }
 
-export default CreateCommunity
+export default CreateCommunity;
