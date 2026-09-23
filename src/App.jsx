@@ -19,7 +19,7 @@ import Discover from './pages/Discover.jsx'
 import Opportunities from './pages/Opportunities'
 import CreateOpportunity from './pages/CreateOpportunity.jsx'
 import Communities from './pages/Communities.jsx'
-// import CreateCommunity from './pages/CreateCommunity.jsx'
+import CreateCommunity from './pages/CreateCommunity.jsx' // <-- Uncommented here
 
 export default function App() {
   const [selectedTopic, setSelectedTopic] = React.useState(null)
@@ -74,10 +74,10 @@ export default function App() {
           />
 
           <Route path="/communities" element={<Communities />} />
-          {/* <Route
+          <Route
             path="/communities/create"
             element={<CreateCommunity />}
-          /> */}
+          />
         </Route>
       </Routes>
     </Router>
