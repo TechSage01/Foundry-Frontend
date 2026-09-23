@@ -10,9 +10,11 @@ import {
   Newspaper,
   AlertCircle,
 } from "lucide-react";
+import { createPostApi } from "../../services/posts";
+
 
 const CreateNewPostCard = ({
-  onAddPost,
+  onAddPostSuccess,
   userAvatar,
   userName = "TechSage",
 }) => {
@@ -29,6 +31,7 @@ const CreateNewPostCard = ({
   const handleMediaChange = (e) => {
     e.stopPropagation();
     const file = e.target.files?.[0];
+    if(!file) return;
     if (file) {
       const isVideo = file.type.startsWith("video/");
       setSelectedMedia({
@@ -46,74 +49,43 @@ const CreateNewPostCard = ({
     setSelectedCategory((prev) => (prev === category ? "Trending" : category));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("submit triggered");
-    console.log("isArticleMode: ", isArticleMode);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (isSubmitting) return;
 
-    //     if ((!content.trim() && !selectedMedia) || isSubmitting) return;
-    //    if(isArticleMode) {
-    //     if(!isArticleMode && !content.trim()) return;
-    //     console.log("BLOCKED: Article title is empty!");
-    //    }else{
-    //     if(!content.trim() && !selectedMedia) return;
-    //     console.log("BLOCKED: Article content is empty!");
-    //    }
-    //     if(!isArticleMode && !content.trim() && !selectedMedia) return;
+  if (isArticleMode) {
+    if (!articleTitle.trim()) return setErrorMessage("Please enter an article title.");
+    if (!content.trim()) return setErrorMessage("Please write content for your article.");
+  } else if (!content.trim() && !selectedMedia) {
+    return setErrorMessage("Please write something or attach media to post.");
+  }
 
-    //     s
-    if (isSubmitting) return;
-    if (isArticleMode) {
-      if (!articleTitle.trim()) {
-        setErrorMessage("Please enter an article title.");
-        return;
-      }
-      if (!content.trim()) {
-        setErrorMessage("Please write some content for your article.");
-        return;
-      }
-    } else {
-      if (!content.trim() && !selectedMedia) {
-        setErrorMessage("Please write something or attach media to post.");
-        return;
-      }
-    }
-    setIsSubmitting(true);
-    try {
-      const newPost = {
-        id: Date.now(),
-        author: userName,
-        badge: "Builder",
-        avatar:
-          userAvatar ||
-          "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
-        timestamp: new Date().toISOString(),
-        isArticle: isArticleMode,
-        isMilestone: isArticleMode,
-        isFollowingAuthor: true,
-        title: isArticleMode ? articleTitle.trim() : null,
-        content: content.trim(),
-        image: selectedMedia?.type === "image" ? selectedMedia.url : null,
-        video: selectedMedia?.type === "video" ? selectedMedia.url : null,
-        likes: 0,
-        commentsList: [],
-        category: selectedCategory,
-      };
-      if (onAddPost) await onAddPost(newPost);
-      setContent("");
-      setArticleTitle("");
-      setSelectedMedia(null);
-      setIsArticleMode(false);
-      setErrorMessage("");
-      if (fileInputRef.current) fileInputRef.current.value = null;
-      //   setSelectedCategory("Trending")
-    } catch (error) {
-      console.error("Failed to post Update: ", error);
-      setErrorMessage("Failed to post update. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  setIsSubmitting(true);
+  try {
+    const payload = {
+      author: userName,
+      avatar: userAvatar,
+      isArticle: isArticleMode,
+      title: isArticleMode ? articleTitle.trim() : null,
+      content: content.trim(),
+      mediaUrl: selectedMedia?.url || null,
+      category: selectedCategory,
+    };
+
+    const newPost = await createPostApi(payload);
+    if (onAddPostSuccess) onAddPostSuccess(newPost);
+
+    setContent("");
+    setArticleTitle("");
+    setSelectedMedia(null);
+    setIsArticleMode(false);
+    setErrorMessage("");
+  } catch (error) {
+    setErrorMessage("Failed to post update. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <div className="bg-white p-4 rounded-2xl  border border-stone-200/80 shadow-sm space-y-3 font-sans">
       <div className="flex items-center gap-3">

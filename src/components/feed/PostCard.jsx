@@ -1,6 +1,7 @@
 import React, { useState} from 'react'
 import CreatePostCard from './CreatePostCard'
 import FeedFilter from './FeedFilter'
+import { addCommentApi, toggleLikeApi, toggleBookmarkApi, toggleRepostApi } from "../../services/posts";
 import {
   Heart,
   MessageSquare,
@@ -10,42 +11,63 @@ import {
 } from 'lucide-react'
 
 const PostCard = ({ post }) => {
-  const [liked,setLiked] = useState(false);
+  const [liked,setLiked] = useState(post?.isLiked || false);
   const [likesCount, setLikesCount] = useState(post?.likes || 0);
 
-  const[reposted, setReposted] = useState(false)
-  const[repostCount, setRepostCount] = useState(post?.repost || 0);
+  const[reposted, setReposted] = useState(post?.isReposted || false);
+  const[repostCount, setRepostsCount] = useState(post?.reposts || 0);
 
-  const[bookmarked, setBookMarked] = useState(false);
+  const[bookmarked, setBookMarked] = useState(post?.isBookmarked || false);
 
   const[showComments, setShowComments]= useState(false)
   const[commentsList, setCommentsList] = useState(post?.commentsList || []);
   const[commentsText, setCommentsText] = useState('')
   const[copied, setCopied] = useState(false)
 
-  const getRelativeTime =(timestamp) => {
+  const getRelativeTime = (timestamp) => {
     if(!timestamp) return 'Just now';
     const posDate = new Date(timestamp)
     if(isNaN(posDate.getTime())) return timestamp;
     const now = new Date()
-    const diffInSeconds = Math.floor((now - posDate)/1000)
+    const diffInSeconds = Math.floor((new Date() - posDate) / 1000);
     if (diffInSeconds < 60 ) return 'Updated Just now'
     if(diffInSeconds < 3600 ) return `${Math.floor(diffInSeconds/ 60)}m ago`
     if(diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}m ago`
 
-    return date.toLocaleDateString(en-US, {month: 'short', day: 'numeric', year: 'numeric'})
+    return posDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})
   };
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikesCount((prev) =>(liked ? prev - 1 : prev + 1));
+  const handleLike = async () => {
+    const nextState = !liked;
+    setLiked(nextState);
+    setLikesCount((prev) =>(nextState ? prev + 1 : prev - 1));
+    try {
+      await toggleLikeApi(post.id || post._id);
+    } catch {
+      setLiked(!nextState);
+      setLikesCount((prev) => (nextState ? prev - 1 : prev + 1));
+    }
   };
-  const handleRepost = ()=> {
-    setReposted(!reposted);
-    setRepostCount((prev) => (reposted ? prev -1 : prev + 1));
-  }
-  const handleBookmark = () => {
-    setBookMarked(!bookmarked)
-  }
+  
+  const handleRepost = async ()=> {
+    const nextState = !reposted;
+    setReposted(nextState);
+    setRepostsCount((prev) => (nextState ? prev + 1 : prev - 1));
+    try {
+      await toggleRepostApi(post.id || post._id);
+    } catch {
+      setReposted(!nextState);
+      setRepostsCount((prev) => (nextState ? prev - 1 : prev + 1));
+    }
+  };
+  const handleBookmark = async () => {
+    const nextState = !bookmarked;
+    setBookmarked(nextState);
+    try {
+      await toggleBookmarkApi(post.id || post._id);
+    } catch {
+      setBookmarked(!nextState);
+    }
+  };
   const handleShare = async () => {
     const shareData = {
       title: `Post by ${post?.author || 'Builder' }`,
@@ -64,17 +86,16 @@ const PostCard = ({ post }) => {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-  const handleAddComment = (e) => {
+  const handleAddComment = async (e) => {
     e.preventDefault();
     if (!commentsText.trim()) return;
-    const newComment = {
-      id:Date.now(),
-      author: 'You',
-      text: commentsText.trim(),
-      timestamp: new Date().toISOString()
-    };
-    setCommentsList([...commentsList, newComment]);
-    setCommentsText('');
+    try {
+      const addedComment = await addCommentApi(post.id || post._id, commentsText.trim());
+      setCommentsList((prev) => [...prev, addedComment]);
+      setCommentsText('');
+    } catch (err) {
+      console.error("Failed to add comment", err);
+    }
   };
   if(!post) return null;
   return (
@@ -82,14 +103,14 @@ const PostCard = ({ post }) => {
   <article className='p-5 bg-white rounded-xl border border-stone-200/60 shadow-sm text-[#1C1917] space-y-3 font-sans'>
     <div className='flex items-center justify-between'>
       <div className='flex items-center gap-3'>
-        <img src=
-          {post.avatar} 
-          alt={post.author} 
+        <img 
+            src={typeof post.author === 'object' ? post.author.avatar : post.avatar} 
+            alt={typeof post.author === 'object' ? post.author.name : post.author}
           className='w-10 h-10 rounded-full border border-stone-200 bg-[#F5F0EB] object-cover'
         />
         <div>
           <div className='flex items-center gap-2'>
-          <h3 className='text-sm font-semibold text-stone-900 leading-none'>{post.author}</h3>
+          <h3 className='text-sm font-semibold text-stone-900 leading-none'>{typeof post.author === 'object' ? post.author.name : post.author}</h3>
           {post.badge && (
             <span className='text-[10px] font-medium px-2 py-0.5 bg-[#F5F0EB] text-stone-600 rounded-full border border-stone-200'>
               {post.badge}
@@ -131,7 +152,7 @@ const PostCard = ({ post }) => {
         </div>
     ): post.image ? (
         <div className='rounded-lg overflow-hidden border border-stone-200/60 mt-2'>
-          <img src={post.image} alt="Post Attachments" className='w-full max-h-80 object-cover'/>
+          <img src={post.image || post.mediaUrl} alt="Post Attachments" className='w-full max-h-80 object-cover'/>
         </div>
     ): null}
 
@@ -217,6 +238,5 @@ const PostCard = ({ post }) => {
   </article>
   </>
   )
-}
-
+};
 export default PostCard
