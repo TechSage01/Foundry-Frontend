@@ -1064,3 +1064,220 @@
 .readiness-card .side-card-header {
   margin-bottom: 18px;
 }
+
+.readiness-card .side-card-header h2 {
+  font-size: 21px;
+}
+.readiness-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--foundry-success-soft);
+  color: var(--foundry-success);
+}
+.readiness-progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border-radius: 999px;
+  background: #ebe6e2;
+}
+.readiness-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--foundry-primary);
+  transition: width 0.3s ease;
+}
+.readiness-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.readiness-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: var(--foundry-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.readiness-check {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d6cec7;
+  border-radius: 50%;
+}
+.readiness-check.complete {
+  border-color: var(--foundry-success);
+  background: var(--foundry-surface-soft);
+  color: var(--foundry-success);
+}
+
+
+.launch-card {
+  padding: 22px;
+}
+.launch-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.launch-warning svg {
+  flex: 0 0 auto;
+  color: var(--foundry-primary);
+}
+.launch-warning p {
+  margin: 0;
+  color: var(--foundry-text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.launch-primary-button, .launch-secondary-button{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--foundry-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.launch-primary-button {
+  min-height: 62px;
+  padding: 10px 14px;
+  border: 1px solid var(--foundry-primary-dark);
+  background: var(--foundry-primary);
+  color: #ffffff;
+  box-shadow: 0 5px 14px rgba(216, 117, 82, 0.18);
+}
+.launch-primary-button:hover {
+  background: var(--foundry-primary-dark);
+  transform: translateY(-1px);
+}
+.launch-secondary-button {
+  min-height: 42px;
+  margin-top: 10px;
+  border: 1px solid transparent;
+  background: #eeeae7;
+  color: var(--foundry-text-secondary);
+}
+.launch-secondary-button:hover {
+  background: #e5dfdb;
+}
+
+
+
+.architect-card {
+  padding: 18px;
+}
+.architect-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.architect-avatar {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eeeae6;
+  color: var(--foundry-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+.architect-profile h3 {
+  margin: 0 0 4px;
+  color: var(--foundry-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+.architect-profile p {
+  margin: 0;
+  color: var(--foundry-text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.architect-profile strong {
+  margin-left: 3px;
+  color: var(--foundry-text-secondary);
+}
+.architect-divider p span {
+  margin-left: 5px;
+  color: var(--foundry-success);
+}
+.architect-divider {
+  height: 1px;
+  margin: 16px 0;
+  background: var(--foundry-border);
+}
+.architect-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.architect-meta span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--foundry-text-secondary);
+  font-size: 11px;
+}
+.architect-meta svg {
+  color: var(--foundry-success);
+}
+
+
+.create-community-page button, .create-community-page input, .create-community-page select, .create-community-page textarea {
+  transition: 
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.create-community-page button:focus-visible,
+.create-community-page input:focus-visible,
+.create-community-page select:focus-visible,
+.create-community-page textarea:focus-visible {
+  outline: 3px solid rgba(216, 117, 82, 0.25);
+  outline-offset: 3px;
+}
+
+
+
+/* responsiveness */
+@media (max-width: 1200px) {
+  .create-community-page {
+    padding: 22px 24px 60px;
+  }
+  .create-community-layout {
+    grid-template-columns: minmax(0, 1fr) 255px;
+    gap: 20px;
+  }
+  .community-form-section {
+    padding: 24px;
+  }
+  .community-side-card{
+    padding: 19px;
+  }
+}
+@media (max-width: 1000px) {
+  .create-community-layout {
+    grid-template-columns: 1fr;
+  }
+}
