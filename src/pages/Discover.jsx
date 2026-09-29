@@ -11,6 +11,7 @@ import {
   Loader2,
   FolderOpen,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { INITIAL_PROJECTS } from "../data/projectData";
 import api from "../services/api";
 import {
@@ -48,7 +49,11 @@ const renderTechStack = (techStackData) => {
     </div>
   );
 };
-
+const toArray = (raw)=> {
+  if(Array.isArray(raw)) return raw;
+  const candidate = raw?.projects ?? raw?.data?.projects ?? raw?.data ?? [];
+  return Array.isArray(candidate) ? candidate : [];
+}
 const Discover = () => {
   const [projects, setProjects] = useState(INITIAL_PROJECTS);
   const [userProjects, setUserProjects] = useState([]);
@@ -58,10 +63,18 @@ const Discover = () => {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+
   // Safely retrieve current user object and username
   const userRaw = JSON.parse(localStorage.getItem("user") || "{}");
   const user = userRaw.user || userRaw.data || userRaw;
   
+  const navigate = useNavigate();
+  const openProject = (p) => {
+    const slug = p.slug || p._slug;
+  console.log("OPEN PROJECT:", slug, p);
+  if (slug) navigate(`/projects/${slug}`);
+  else setSelectedProject(p);
+  }
   const currentUsername =
     user?.username ||
     user?.handle ||
@@ -106,9 +119,7 @@ const Discover = () => {
         const res = await api.get("/api/projects");
 
         const rawData = res.data;
-        const projectsArray = Array.isArray(rawData)
-          ? rawData
-          : rawData?.projects || rawData?.data || [];
+        const projectsArray = toArray(res.data);
 
         if (projectsArray.length > 0) {
           setProjects(projectsArray);
@@ -137,7 +148,7 @@ const Discover = () => {
           ? rawData
           : rawData?.projects || rawData?.data || [];
 
-        setUserProjects(fetchedUserProjects);
+        setUserProjects(toArray(res.data));
       } catch (err) {
         console.error("Failed to load user projects:", err);
       } finally {
@@ -188,8 +199,8 @@ const Discover = () => {
 
       const createdProject = res.data?.project || res.data?.data || res.data;
 
-      setUserProjects((prev) => [createdProject, ...prev]);
-      setProjects((prev) => [createdProject, ...prev]);
+      setUserProjects((prev) => [createdProject, ...(Array.isArray(prev) ? prev : [])]);
+      setProjects((prev) => [createdProject, ...(Array.isArray(prev) ? prev : [])]);
 
       setIsSubmitModalOpen(false);
       setActiveTab("my-projects");
@@ -220,7 +231,6 @@ const Discover = () => {
             project={selectedProject}
             currentUser={user}
             api={api}
-            isAuthor={true}
             onBack={() => setSelectedProject(null)}
           />
         ) : (
@@ -340,7 +350,7 @@ const Discover = () => {
 
                   <div className="flex items-center gap-2 pt-2">
                     <button
-                      onClick={() => setSelectedProject(featuredProject)}
+                      onClick={() => openProject(featuredProject)}
                       className="flex-1 bg-[#A04622] hover:bg-[#8A3A1B] text-white text-xs font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <span>Explore Project</span>
@@ -420,7 +430,7 @@ const Discover = () => {
                   {displayedProjects.map((project) => (
                     <div
                       key={project._id || project.id}
-                      onClick={() => setSelectedProject(project)}
+                      onClick={() => openProject(project)}
                       className="bg-white rounded-2xl border border-stone-200/80 shadow-sm p-4 space-y-3 cursor-pointer hover:border-stone-300 transition-all flex flex-col justify-between group"
                     >
                       <div className="space-y-3">

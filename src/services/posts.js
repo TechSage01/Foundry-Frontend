@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://foundry-00kt.onrender.com/api";
-
-export const fetchPosts = async (activeTab, sortBy, selectedTopic) => {
+import api from "./api";
+export const fetchPost = async (activeTab, sortBy, selectedTopic) => {
   const params = new URLSearchParams({
     tab: activeTab,
     sort: sortBy,
@@ -11,14 +11,34 @@ export const fetchPosts = async (activeTab, sortBy, selectedTopic) => {
   return res.json();
 };
 
-export const createPostApi = async (postData) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(postData),
+export const fetchPosts = async ({ mine = false, drafts = false} = {}) => {
+  const path = drafts? "api/posts/me/drafts" : mine ? "api/posts/me" : "api/posts";
+  const res = await api.get(path);
+  const data = res.data?.data || res.data?.posts || res.data;
+  return Array.isArray(data) ? data : [];
+};
+export const fetchPostsBySlug = async (slug) => {
+  const res = await api.get(`/api/posts/${slug}`);
+  return res.data?.data || res.data?.post || res.data;
+}
+export const createPostApi = async (formData) => {
+  const res = await api.post(`/api/posts`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    // body: JSON.stringify(postData),
   });
-  if (!res.ok) throw new Error("Failed to create post");
-  return res.json();
+  return res.data?.data || res.data?.post || res.data;
+  // if (!res.ok) throw new Error("Failed to create post");
+  // return res.json();
+};
+export const updatePostApi = async (id, postData) => {
+  const res = await api.put(`/api/posts/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data?.data || res.data?.post || res.data;
+}
+
+export const deletePostApi = async (id) => {
+  await api.delete(`/api/posts/${id}`);
 };
 
 export const toggleLikeApi = async (postId) => {

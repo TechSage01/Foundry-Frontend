@@ -27,6 +27,14 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const toArray = (raw, ...keys) => {
+  if (Array.isArray(raw)) return raw;
+  if (!raw || typeof raw !== "object") return [];
+  for (const k of keys) {
+    if (Array.isArray(raw[k])) return raw[k];
+  }
+  return raw.data ? toArray(raw.data, ...keys) : [];
+};
 function Profile() {
   const [user, setUser] = useState(null);
   const [userProjects, setUserProjects] = useState([]);
@@ -328,7 +336,9 @@ function Profile() {
   };
 
   const fetchFollowList = async (type) => {
-    const username = user?.username;
+    const username = user?.username || user?.userName || user?.user_name;
+    console.log("PROFILE ME:", userData, "username used:", username);
+
     if (!username) return;
     setFollowModal((prev) => ({
       ...prev,
@@ -442,7 +452,7 @@ function Profile() {
         const username = userData.username;
 
         if (username) {
-          fetchUserPosts(username);
+          fetchUserPosts();
           try {
             const expRes = await api.get(`/api/experiences/user/${username}`);
             const rawData =
@@ -472,12 +482,21 @@ function Profile() {
           // 2. GET Projects
           try {
             const projRes = await api.get(`/api/projects/user/${username}`);
-            const fetchedProjects =
-              projRes.data?.projects || projRes.data?.data || projRes.data;
-            if (Array.isArray(fetchedProjects)) {
-              setUserProjects(fetchedProjects);
-            }
+            console.log("Fetched projects response:", projRes.data);
+            setUserProjects(
+              toArray(projRes.data, "projects", "data", "items", "results"),
+            );
+            // const fetchedProjects =
+            //   projRes.data?.projects || projRes.data?.data || projRes.data;
+            // if (Array.isArray(fetchedProjects)) {
+            //   setUserProjects(fetchedProjects);
+            // }
           } catch (projErr) {
+            console.error(
+              "Failed to fetch user projects:",
+              projErr.response?.status,
+              projErr.response?.data || projErr,
+            );
             if (Array.isArray(userData.projects)) {
               setUserProjects(userData.projects);
             }
@@ -520,11 +539,12 @@ function Profile() {
     setTotalLikes(projectLikes + postLikes);
   }, [userProjects, posts]);
 
-  const fetchUserPosts = async (username) => {
+  const fetchUserPosts = async () => {
     try {
       setPostsLoading(true);
-      const res = await api.get(`/api/posts/user/${username}`); // adjust if your route differs
+      const res = await api.get(`/api/posts/me`); 
       const fetched = res.data?.data || res.data?.posts || res.data;
+      setPosts(toArray(res.data, "posts", "items", "results", "rows"));
       if (Array.isArray(fetched)) setPosts(fetched);
     } catch (error) {
       console.error("Failed to fetch user posts:", error);
@@ -1266,39 +1286,41 @@ function Profile() {
                   (userProjects.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {userProjects.map((project, index) => {
-                        const projectId = project._id || project.id;
-                        <Link
-                        to={`/projects/${projectId}`}
-                          key={projectId || index}
-                          className="group border border-stone-100 rounded-xl overflow-hidden hover:border-stone-300 transition"
-                        >
-                          <div className="h-36 bg-stone-100 overflow-hidden">
-                            <img
-                              src={
-                                project.image ||
-                                project.cover_image_url ||
-                                "https://images.unsplash.com/photo-1555066931-4365d14bab8c"
-                              }
-                              alt={project.title || project.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                            />
-                          </div>
-                          <div className="p-3.5 space-y-1">
-                            <h3 className="font-semibold text-stone-900 text-sm">
-                              {project.title || project.name}
-                            </h3>
-                            <p className="text-xs text-stone-500 line-clamp-2">
-                              {project.description ||
-                                "No description provided."}
-                            </p>
-                            <div className="flex items-center gap-3 pt-1 text-xs text-stone-400">
-                              <span>
-                                ❤ {project.likes_count || project.likes || 0}
-                              </span>
+                        const projectSlug = project._slug || project.slug;
+                        return (
+                          <Link
+                            to={`/projects/${projectSlug}`}
+                            key={projectSlug || index}
+                            className="group border border-stone-100 rounded-xl overflow-hidden hover:border-stone-300 transition"
+                          >
+                            <div className="h-36 bg-stone-100 overflow-hidden">
+                              <img
+                                src={
+                                  project.image ||
+                                  project.cover_image_url ||
+                                  "https://images.unsplash.com/photo-1555066931-4365d14bab8c"
+                                }
+                                alt={project.title || project.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                              />
                             </div>
-                          </div>
-                        </Link>
-})}
+                            <div className="p-3.5 space-y-1">
+                              <h3 className="font-semibold text-stone-900 text-sm">
+                                {project.title || project.name}
+                              </h3>
+                              <p className="text-xs text-stone-500 line-clamp-2">
+                                {project.description ||
+                                  "No description provided."}
+                              </p>
+                              <div className="flex items-center gap-3 pt-1 text-xs text-stone-400">
+                                <span>
+                                  ❤ {project.likes_count || project.likes || 0}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-sm text-stone-400 text-center py-10">
@@ -1389,33 +1411,35 @@ function Profile() {
             {userProjects && userProjects.length > 0 ? (
               <div className="space-y-4">
                 {userProjects.slice(0, 3).map((project, index) => {
-                  const projectId = project._id || project.id;
-                  <Link
-                    to={`/projects/${projectId}`}
-                    className="group border border-stone-100 rounded-xl overflow-hidden hover:border-stone-300 transition"
-                    key={projectId || index}
-                  >
-                    <div className="h-32 bg-stone-100 overflow-hidden">
-                      <img
-                        src={
-                          project.image ||
-                          project.cover_image_url ||
-                          "https://images.unsplash.com/photo-1555066931-4365d14bab8c"
-                        }
-                        alt={project.title || project.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                      />
-                    </div>
-                    <div className="p-3.5 space-y-1">
-                      <h3 className="font-semibold text-stone-900 text-sm">
-                        {project.title || project.name}
-                      </h3>
-                      <p className="text-xs text-stone-500 line-clamp-2">
-                        {project.description || "No description provided."}
-                      </p>
-                    </div>
-                  </Link>
-})}
+                  const projectSlug = project._slug || project.slug;
+                  return (
+                    <Link
+                      to={`/projects/${projectSlug}`}
+                      className="group border border-stone-100 rounded-xl overflow-hidden hover:border-stone-300 transition"
+                      key={projectSlug || index}
+                    >
+                      <div className="h-32 bg-stone-100 overflow-hidden">
+                        <img
+                          src={
+                            project.image ||
+                            project.cover_image_url ||
+                            "https://images.unsplash.com/photo-1555066931-4365d14bab8c"
+                          }
+                          alt={project.title || project.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        />
+                      </div>
+                      <div className="p-3.5 space-y-1">
+                        <h3 className="font-semibold text-stone-900 text-sm">
+                          {project.title || project.name}
+                        </h3>
+                        <p className="text-xs text-stone-500 line-clamp-2">
+                          {project.description || "No description provided."}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
 
                 {userProjects.length > 3 && (
                   <Link
@@ -2141,7 +2165,7 @@ function Profile() {
               </div>
               <div>
                 <label className="block font-semibold text-stone-700 mb-1">
-                  Tagline  <span className="text-rose-500">*</span>
+                  Tagline <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -2173,7 +2197,7 @@ function Profile() {
                     <div className="flex flex-col items-center justify-center gap-2 py-10">
                       <UploadCloud size={14} />
                       <p className="text-sm font-medium text-stone-600">
-                         Click to Upload Project cover image
+                        Click to Upload Project cover image
                       </p>
                       <p className="text-xs text-stone-400">
                         PNG, JPG, WebP up to 5MB
@@ -2283,7 +2307,8 @@ function Profile() {
             <div className="flex justify-end gap-3 pt-2 border-t border-stone-100">
               <button
                 onClick={() => {
-                  if (projectCoverPreview) URL.revokeObjectURL(projectCoverPreview);
+                  if (projectCoverPreview)
+                    URL.revokeObjectURL(projectCoverPreview);
                   setProjectCoverPreview("");
                   setCreateProjectOpen(false);
                 }}
