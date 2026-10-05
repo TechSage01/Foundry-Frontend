@@ -607,5 +607,29 @@
   .notifications-heading h1 {
     font-size: 26px;
   }
-  
+  .notifications-header-actions {
+    flex-direction: column;
+  }
+  .notifications-mark-read, 
+  .notifications-settings {
+    width: 100%;
+  }
+  .notification-card {
+    align-items: flex-start;
+  }
+  .notification-card__top {
+    flex-direction: column;
+    gap: 3px;
+  }
+  .notification-unread-dot {
+    position: absolute;
+    top: 20px;
+    right: 18px;
+  }
+  .notification-card__time {
+    order: 2;
+  }
+  .notification-card__actions {
+    gap: 7px;
+  }
 }
