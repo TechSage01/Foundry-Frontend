@@ -521,3 +521,91 @@
 }
 
 /* Responsive */
+@media (max-width: 1050px) {
+  .notifications-page {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 22px;
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+  .notification-sidebar {
+    padding-top: 118px;
+  }
+  .notification-summary-card,
+  .notification-preferences-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 850px) {
+  .notifications-page {
+    grid-template-columns: 1fr;
+  }
+  .notification-sidebar {
+    padding-top: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .notifications-page {
+    padding: 22px 16px 40px;
+  }
+  .notifications-header {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .notifications-header {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .notifications-header-actions {
+    width: 100%;
+    padding-top: 0;
+  }
+  .notifications-mark-read,
+  .notifications-settings {
+    flex: 1;
+  }
+  .notification-filters {
+    margin-bottom: 30px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 3px;
+  }
+  .notification-filter {
+    flex: 0 0 auto;
+  }
+  .notification-card {
+    gap: 12px;
+    padding: 16px;
+  }
+  .notification-card--unread {
+    padding-left: 14px;
+  }
+  .notification-avatar,
+  .notification-icon {
+    width: 42px;
+    height: 42px;
+  }
+  .notification-card__top {
+    gap: 8px;
+  }
+  .notification-card__message {
+    font-size: 12px;
+  }
+  .notification-card__time {
+    font-size: 10px;
+  }
+  .notification-sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 450px) {
+  .notifications-heading h1 {
+    font-size: 26px;
+  }
+  
+}
