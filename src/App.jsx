@@ -19,7 +19,8 @@ import Discover from './pages/Discover.jsx'
 import Opportunities from './pages/Opportunities'
 import CreateOpportunity from './pages/CreateOpportunity.jsx'
 import Communities from './pages/Communities.jsx'
-import CreateCommunity from './pages/CreateCommunity.jsx' // <-- Uncommented here
+import CreateCommunity from './pages/CreateCommunity.jsx'
+import Notifications from './pages/Notifications'
 
 export default function App() {
   const [selectedTopic, setSelectedTopic] = React.useState(null)
@@ -68,16 +69,20 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
 
           <Route path="/opportunities" element={<Opportunities />} />
+
           <Route
             path="/opportunities/create"
             element={<CreateOpportunity />}
           />
 
           <Route path="/communities" element={<Communities />} />
+
           <Route
             path="/communities/create"
             element={<CreateCommunity />}
           />
+
+          <Route path="/notifications" element={<Notifications />} />
         </Route>
       </Routes>
     </Router>
