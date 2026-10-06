@@ -79,10 +79,26 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-top: 28px;
 }
 
-.notifications-mark-read,
+.notifications-mark-read{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--foundry-border);
+  border-radius: 10px;
+  background: var(--foundry-surface);
+  color: var(--foundry-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
 .notifications-settings {
   min-height: 40px;
   padding: 0 15px;
@@ -104,7 +120,10 @@
     border-color 0.2s ease;
 }
 
-.notifications-mark-read:hover,
+.notifications-mark-read:hover {
+  background: var(--foundry-surface-hover);
+  border-color: var(--foundry-border-strong);
+}
 .notifications-settings:hover {
   background: var(--foundry-surface-hover);
   border-color: var(--foundry-border);
