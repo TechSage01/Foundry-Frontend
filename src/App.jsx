@@ -10,6 +10,7 @@ import Opportunities from "./pages/Opportunities";
 import Communities from "./pages/Communities.jsx";
 import CreateCommunity from "./pages/CreateCommunity.jsx";
 import Notifications from "./pages/Notifications";
+import NotificationSettings from "./pages/NotificationSettings";
 
 export default function App() {
   return (
@@ -31,6 +32,8 @@ export default function App() {
         <Route path="/communities/create" element={<CreateCommunity />} />
 
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/settings/notifications"element={<NotificationSettings />}
+        />
       </Routes>
     </Router>
   );

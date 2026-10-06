@@ -144,7 +144,10 @@ function Notifications() {
                 <CheckCheck size={17} />
                 Mark all as read
               </button>
-              <Link to="/settings" className="notifications-settings">
+              <Link
+                to="/settings/notifications"
+                className="notification-configure-button"
+              >
                 <Settings size={17} />
                 Settings
               </Link>
@@ -228,7 +231,7 @@ function Notifications() {
               <div className="activity-summary-item">
                 <span>Opportunity Matches</span>
                 <strong>4</strong>
-              </div>          
+              </div>
             </div>
           </section>
           <section className="notification-preferences-card">
@@ -241,15 +244,13 @@ function Notifications() {
               </span>
               <h2>Stay in the loop</h2>
               <p>
-                Choose how and when Foundry keeps you updated about your activity.
+                Choose how and when Foundry keeps you updated about your
+                activity.
               </p>
             </div>
-            <Link 
-              to="/settings"
-              className="notification-configure-button"
-              >
-                Configure Channels
-                <ArrowUpRight size={16} />
+            <Link to="/settings" className="notification-configure-button">
+              Configure Channels
+              <ArrowUpRight size={16} />
             </Link>
           </section>
         </aside>
