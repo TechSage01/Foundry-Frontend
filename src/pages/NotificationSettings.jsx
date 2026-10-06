@@ -103,7 +103,7 @@ function NotificationSettings() {
                     <button
                       type="button"
                       className={`notification-toggle ${
-                        enabled ? "notification-toggle-active" : ""
+                        enabled ? "notification-toggle--active" : ""
                       }`}
                       onClick={() => toggleSetting(item.id)}
                       aria-pressed={enabled}
