@@ -6,28 +6,36 @@ import PostCard from "../components/feed/PostCard";
 import { dummyPosts } from "../data/post";
 import RightSidebar from "../components/layout/RightSidebar";
 import { fetchPosts } from "../services/posts";
-
+import api from "../services/api";
+import { getUserAvatar, getUserName } from "../utils/Avatar";
 const Home = ({ selectedTopic, onSelectTopic }) => {
-  const [posts, setPosts] = useState(dummyPosts);
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Trending");
-  const [sortBy, setSortBy] = useState("Latest");
-
-  const currentUser = { 
-    name: "TechSage",
-    avatar:
-      "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
-  };
-
+  const [sortBy, setSortBy] = useState("latest");
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await api.get("/api/auth/me");
+        const userData = res.data?.data || res.data?.user || res.data;
+        setUser(userData);
+      } catch (err) {
+        console.error("Failed to fetch current user:", err);
+      }
+    };
+    fetchUser();
+  }, []);
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const data = await fetchPosts(activeTab, sortBy, selectedTopic);
-      if (Array.isArray(data) && data.length > 0) {
-        setPosts(data);
-      }
+      const data = await fetchPosts();
+      setPosts(data);
+      // if (Array.isArray(data) && data.length > 0) {
+      //   setPosts(data);
+      // }
     } catch (err) {
-      console.error("Error fetching posts:", err);
+      console.error("Error fetching posts:", err.response?.status, err.response?.data);
     } finally {
       setLoading(false);
     }
@@ -35,10 +43,33 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
 
   useEffect(() => {
     loadPosts();
-  }, [activeTab, sortBy, selectedTopic]);
+  }, []);
 
   const handleAddPostSuccess = (createdPost) => {
-    setPosts((prev) => [createdPost, ...prev]);
+    const currentAuthor = user
+      ? {
+          id: user.id || user._id,
+          username: user.username,
+          name: getUserName(user),
+          avatar_url: getUserAvatar(user),
+        }
+      : null;
+
+    const existing =
+      createdPost.author && typeof createdPost.author === "object"
+        ? createdPost.author
+        : {};
+
+    const enriched = {
+      ...createdPost,
+      author: {
+        ...currentAuthor,
+        ...existing,
+        avatar_url: getUserAvatar(existing) || currentAuthor?.avatar_url,
+      },
+    };
+
+    setPosts((prev) => [enriched, ...prev]);
     if (selectedTopic) onSelectTopic(null);
   };
 
@@ -60,11 +91,14 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
   });
 
   const sortedPosts = [...filteredPosts].sort((a, b) => {
-    if (sortBy === "Top" || sortBy === "most-liked") {
-      return (b.likes || 0) - (a.likes || 0);
+    if (sortBy === "top" || sortBy === "most-liked") {
+      return (b.likes_count ?? b.likes ?? 0 ) - (a.likes_count ?? a.likes ?? 0);
     }
-    if (sortBy === "Latest") {
-      return new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt);
+    if (sortBy === "latest") {
+      return (
+        new Date(b.created_at || b.createdAt || b.timestamp) -
+        new Date(a.created_at || a.createdAt || a.timestamp)
+      );
     }
     return 0;
   });
@@ -88,8 +122,8 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
       {/* Fixed: Updated prop name to onAddPostSuccess to match CreateNewPostCard */}
       <CreateNewPostCard
         onAddPostSuccess={handleAddPostSuccess}
-        userName={currentUser.name}
-        userAvatar={currentUser.avatar}
+        userName={user? getUserName(user) : undefined}
+        userAvatar={getUserAvatar(user)}
       />
 
       <FeedFilter
@@ -110,20 +144,20 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
               {selectedTopic
                 ? `No posts found under ${selectedTopic}`
                 : activeTab === "Following"
-                ? "You are not following anyone yet. Start following users to see their posts here."
-                : `No post found under ${activeTab}`}
+                  ? "You are not following anyone yet. Start following users to see their posts here."
+                  : `No post found under ${activeTab}`}
             </p>
             <p className="text-sm font-semibold text-stone-400 mt-1">
               {activeTab === "Following"
                 ? "Explore the platform and follow users to see their posts in your feed."
                 : selectedTopic
-                ? `Be the first to create a post under ${selectedTopic}`
-                : `Be the first to create/share a post under ${activeTab}`}
+                  ? `Be the first to create a post under ${selectedTopic}`
+                  : `Be the first to create/share a post under ${activeTab}`}
             </p>
           </div>
         ) : (
           sortedPosts.map((post) => (
-            <PostCard key={post.id || post._id} post={post} />
+            <PostCard key={post.id || post._id} post={post} currentUser={user}  />
           ))
         )}
       </div>

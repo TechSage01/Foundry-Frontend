@@ -12,7 +12,9 @@ export const fetchPost = async (activeTab, sortBy, selectedTopic) => {
 };
 
 export const fetchPosts = async ({ mine = false, drafts = false} = {}) => {
-  const path = drafts? "api/posts/me/drafts" : mine ? "api/posts/me" : "api/posts";
+  const path = drafts? "api/posts/me/drafts"
+   : mine ? "api/posts/me"
+   : "api/posts";
   const res = await api.get(path);
   const data = res.data?.data || res.data?.posts || res.data;
   return Array.isArray(data) ? data : [];
@@ -42,25 +44,31 @@ export const deletePostApi = async (id) => {
 };
 
 export const toggleLikeApi = async (postId) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/like`, { method: "POST" });
-  return res.json();
+  const res = await api.post(`/api/posts/${postId}/likes`);
+  return res.data?.data || res.data?.post || res.data;
 };
 
 export const addCommentApi = async (postId, text) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/comments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+  const res = await api.post(`/api/posts/${postId}/comments`, {
+   content: text,
   });
-  return res.json();
+  return res.data?.data || res.data?.comment || res.data;
+};
+
+export const fetchCommentsApi = async (postId) => {
+  const res = await api.get(`/api/posts/${postId}/comments`);
+  const data = res.data?.data || res.data?.comments || res.data;
+  return Array.isArray(data) ? data : [];
 };
 
 export const toggleBookmarkApi = async (postId) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/bookmark`, { method: "POST" });
-  return res.json();
+  const res = await api.post(`/api/posts/${postId}/bookmark`);
+  return res.data?.data || res.data?.post || res.data;
 };
 
-export const toggleRepostApi = async (postId) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/repost`, { method: "POST" });
-  return res.json();
+export const setRepostApi = async (postId, isReposting) => {
+  const res = isReposting
+    ? await api.post(`/api/posts/${postId}/repost`)
+    : await api.delete(`/api/posts/${postId}/repost`);
+  return res.data?.data || res.data;
 };

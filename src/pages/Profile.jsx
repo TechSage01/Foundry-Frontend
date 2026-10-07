@@ -48,6 +48,7 @@ function Profile() {
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [reposts, setReposts] = useState([]);
+
   const [likedItems, setLikedItems] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
   const [totalLikes, setTotalLikes] = useState(0);
@@ -62,6 +63,23 @@ function Profile() {
   const [followingCount, setFollowingCount] = useState(0);
   const [createChooserOpen, setCreateChooserOpen] = useState(false);
   const [projectCoverPreview, setProjectCoverPreview] = useState(false);
+  const [drafts, setDrafts] = useState([]);
+  const fetchUserDrafts = async () => {
+    try {
+      const res = await api.get("/api/posts/me/drafts");
+      setDrafts(toArray(res.data, "posts", "items", "results", "rows"));
+    } catch (error) {
+      if (error.response?.status === 404) {
+        setDrafts([]);
+      } else {
+        console.error(
+          "Failed to fetch drafts:",
+          error.response?.status,
+          error.response?.data,
+        );
+      }
+    }
+  };
   const [projectForm, setProjectForm] = useState({
     title: "",
     tagLine: "",
@@ -254,7 +272,7 @@ function Profile() {
       setUserProjects((prev) => [created, ...prev]);
       setProjectForm({
         title: "",
-        tagline: "",
+        tagLine: "",
         description: "",
         tech_stack: "",
         demo_url: "",
@@ -285,7 +303,16 @@ function Profile() {
       const data = new FormData();
       data.append("title", postForm.title.trim());
       data.append("content", postForm.content.trim());
-      if (postForm.image) data.append("image", postForm.image);
+      data.append("is_published", publish ? "true" : "false");
+      data.append("cover_image", postForm.image);
+
+      if (postForm.image) data.append("cover_image", postForm.image);
+      if (publish) setPosts((prev) => [created, ...prev]);
+      else setDrafts((prev) => [created, ...prev]);
+      showToast(
+        "Success",
+        publish ? "Post Published successfully." : "Saved to drafts",
+      );
 
       const res = await api.post("/api/posts", data, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -300,6 +327,25 @@ function Profile() {
       setCreateError(error.response?.data?.message || "Failed to create post.");
     } finally {
       setCreating(false);
+    }
+  };
+  const handlePublishDraft = async (post) => {
+    try {
+      const data = new FormData();
+      data.append("is_published", "true");
+      await api.put(`api/posts/${post.id || post._id}`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setDrafts((prev) =>
+        prev.filter((d) => (d.id || d._id) !== (post.id || post._id)),
+      );
+      setPosts((prev) => [{ ...post, is_published: true }, ...prev]);
+      showToast("success", "Draft Published.");
+    } catch (error) {
+      showToast(
+        "error",
+        error.response?.data?.message || "Failed to publish draft.",
+      );
     }
   };
   const handleToggleFollow = async () => {
@@ -337,7 +383,6 @@ function Profile() {
 
   const fetchFollowList = async (type) => {
     const username = user?.username || user?.userName || user?.user_name;
-    console.log("PROFILE ME:", userData, "username used:", username);
 
     if (!username) return;
     setFollowModal((prev) => ({
@@ -430,7 +475,11 @@ function Profile() {
           userData.avatar ||
           userData.profilePicture;
 
-        const userCover = userData.cover_url || userData.cover;
+        const userCover =
+          userData.cover_image ||
+          userData.cover_url ||
+          userData.cover ||
+          userData.cover_image_url;
 
         setUser({
           ...userData,
@@ -453,6 +502,7 @@ function Profile() {
 
         if (username) {
           fetchUserPosts();
+          fetchUserDrafts();
           try {
             const expRes = await api.get(`/api/experiences/user/${username}`);
             const rawData =
@@ -542,7 +592,7 @@ function Profile() {
   const fetchUserPosts = async () => {
     try {
       setPostsLoading(true);
-      const res = await api.get(`/api/posts/me`); 
+      const res = await api.get(`/api/posts/me`);
       const fetched = res.data?.data || res.data?.posts || res.data;
       setPosts(toArray(res.data, "posts", "items", "results", "rows"));
       if (Array.isArray(fetched)) setPosts(fetched);
@@ -588,6 +638,7 @@ function Profile() {
     setToast({ type, text });
     setTimeout(() => setToast({ type: "", text: "" }), 3000);
   };
+
   const handleQuickImageSelect = (e, type) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -675,13 +726,20 @@ function Profile() {
         setAvatarFile(null);
       } else {
         newUrl =
+          updated?.cover_image ||
           updated?.cover_url ||
           updated?.cover ||
           updated?.coverUrl ||
-          updated?.cover_image_url;
-        preview;
+          updated?.cover_image_url ||
+          preview;
         setCoverPreview(newUrl);
-        setUser((prev) => ({ ...prev, cover: newUrl, cover_url: newUrl }));
+        setUser((prev) => ({
+          ...prev,
+          cover: newUrl,
+          cover_image: newUrl,
+          cover_url: newUrl,
+          cover_image_url: newUrl,
+        }));
         setCoverFile(null);
       }
       if (newUrl !== preview) URL.revokeObjectURL(preview);
@@ -933,6 +991,8 @@ function Profile() {
             <img
               src={
                 coverPreview ||
+                user?.cover_image ||
+                user?.cover_url ||
                 user?.cover ||
                 "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe"
               }
@@ -1255,6 +1315,7 @@ function Profile() {
                     count: userProjects.length,
                   },
                   { key: "posts", label: "Posts", count: posts.length },
+                  { key: "drafts", label: "Drafts", count: drafts.length },
                   { key: "reposts", label: "Reposts", count: reposts.length },
                   { key: "likes", label: "Likes", count: likedItems.length },
                   {
@@ -1354,7 +1415,37 @@ function Profile() {
                       No posts yet. Click "Create" to write one.
                     </p>
                   ))}
-
+                {activeTab === "drafts" &&
+                  (drafts.length > 0 ? (
+                    <div className="space-y-3">
+                      {drafts.map((post, index) => (
+                        <article
+                          key={post._id || post.id || index}
+                          className="p-4 border border-stone-100 rounded-xl hover:border-stone-300 transition"
+                        >
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-stone-900 text-sm">
+                              {post.title}
+                            </h3>
+                            <p className="text-xs text-stone-500 line-clamp-3 mt-1">
+                              {post.content}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handlePublishDraft(post)}
+                            className="shrink-0 px-3 py-1.5 text-xs font-semibold text-white bg-[#A04622] hover:bg[#A85381A] rounded-lg cursor-pointer"
+                          >
+                            Publish
+                          </button>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-stone-400 text-center py-10">
+                      No drafts yet. Click "Create" to write one.
+                    </p>
+                  ))}
                 {activeTab === "reposts" && (
                   <p className="text-sm text-stone-400 text-center py-10">
                     Reposts aren't available yet — this tab will populate once
@@ -2207,6 +2298,7 @@ function Profile() {
                 </button>
                 <input
                   type="file"
+                  ref={projectCoverInputRef}
                   accept="image/*"
                   className="hidden"
                   onChange={handleProjectCoverSelect}
@@ -2253,11 +2345,11 @@ function Profile() {
                 <input
                   type="text"
                   placeholder="Technologies (comma separated)"
-                  value={projectForm.technologies}
+                  value={projectForm.tech_stack}
                   onChange={(e) =>
                     setProjectForm((p) => ({
                       ...p,
-                      technologies: e.target.value,
+                      tech_stack: e.target.value,
                     }))
                   }
                   className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
@@ -2392,7 +2484,14 @@ function Profile() {
                 Cancel
               </button>
               <button
-                onClick={handleCreatePost}
+                onClick={() => handleCreatePost(false)}
+                disabled={creating}
+                className="px-4 py-2.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl"
+              >
+                Save Draft
+              </button>
+              <button
+                onClick={() => handleCreatePost(true)}
                 disabled={creating}
                 className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-[#A04622] hover:bg-[#85381a] rounded-xl disabled:opacity-50"
               >

@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { createPostApi } from "../../services/posts";
+import { AvatarFallback } from "../../utils/Avatar";
 
 const CreateNewPostCard = ({
   onAddPostSuccess,
@@ -83,9 +84,13 @@ const CreateNewPostCard = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
+    const trimmed =  content.trim();
+
     const title = isArticleMode
       ? articleTitle.trim()
-      : content.trim().slice(0, 80);
+      : content.trim().slice(0, 80) ||
+      (selectedMedia?.type === "video" ? "Video update" : "Photo update")
+      const body = trimmed || title;
     if (isArticleMode) {
       if (!articleTitle.trim())
         return setErrorMessage("Please enter an article title.");
@@ -99,7 +104,7 @@ const CreateNewPostCard = ({
     try {
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("content", content.trim());
+      formData.append("content",body);
       formData.append("is_published", true);
       if (selectedCategory && selectedCategory !== "Trending") {
         formData.append("tags", selectedCategory);
@@ -122,9 +127,10 @@ const CreateNewPostCard = ({
       setErrorMessage("");
     } catch (error) {
       console.error("Post creation failed:", error.response?.data || error);
-  setErrorMessage(
-    error.response?.data?.message || "Failed to post update. Please try again.",
-  );
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Failed to post update. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -137,8 +143,15 @@ const CreateNewPostCard = ({
     <div className="bg-white p-4 rounded-2xl  border border-stone-200/80 shadow-sm space-y-3 font-sans">
       <div className="flex items-center gap-3">
         <img
-          src={userAvatar && userAvatar.trim()}
+          src={
+            (typeof userAvatar === "string" && userAvatar) ||
+            AvatarFallback(userName)
+          }
           alt={userName}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = AvatarFallback(userName);
+          }}
           className="w-10 h-10 rounded-full object-cover border border-stone-200/80 bg-[#F7F4F0] shrink-0"
         />
 
