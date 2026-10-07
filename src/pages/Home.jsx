@@ -144,15 +144,15 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
               {selectedTopic
                 ? `No posts found under ${selectedTopic}`
                 : activeTab === "Following"
-                ? "You are not following anyone yet. Start following users to see their posts here."
-                : `No post found under ${activeTab}`}
+                  ? "You are not following anyone yet. Start following users to see their posts here."
+                  : `No post found under ${activeTab}`}
             </p>
             <p className="text-sm font-semibold text-stone-400 mt-1">
               {activeTab === "Following"
                 ? "Explore the platform and follow users to see their posts in your feed."
                 : selectedTopic
-                ? `Be the first to create a post under ${selectedTopic}`
-                : `Be the first to create/share a post under ${activeTab}`}
+                  ? `Be the first to create a post under ${selectedTopic}`
+                  : `Be the first to create/share a post under ${activeTab}`}
             </p>
           </div>
         ) : (

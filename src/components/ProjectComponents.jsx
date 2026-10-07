@@ -36,7 +36,7 @@ const formatPostTime = (dateInput) => {
   if (diffInSeconds < 45) relative = "Just now";
   else if (diffInSeconds < 90) relative = "1 minute ago";
   else if (diffInSeconds < 3600)
-    relative = `${Math.max(1, Math.round(diffSec / 60))} min ago`;
+    relative = `${Math.max(1, Math.round(diffInSeconds / 60))} min ago`;
   else if (diffInSeconds < 7200) relative = "1 hour ago";
   else if (diffInSeconds < 86400) {
     const h = Math.floor(diffInSeconds / 3600);
@@ -294,6 +294,9 @@ export const ProjectComponents = ({
         updated?.is_completed ??
         updated?.done ??
         updated?.isDone;
+      const next =
+        serverValue !== undefined ? Boolean(serverValue) : !phase.completed;
+
       setPhases((prev) =>
         prev.map((p, i) =>
           i === index
@@ -785,7 +788,9 @@ export const ProjectComponents = ({
                     No project roadmap phases published yet.
                   </p>
                 ) : (
-                  phases.map((phase, idx) => (
+                  phases.map((phase, idx) => {
+                    const done = isDone(phase);
+                    return(
                     <div
                       key={phase.id || idx}
                       className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1 transition-all"
@@ -809,14 +814,12 @@ export const ProjectComponents = ({
                             <button
                               onClick={() => handleTogglePhase(idx)}
                               className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold cursor-pointer border transition-colors ${
-                                phase.completed
+                                done
                                   ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200"
                                   : "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
                               }`}
                             >
-                              {phase.completed
-                                ? "Completed ✓"
-                                : "Mark Completed"}
+                              {done ? "Completed ✓" : "Mark Completed"}
                             </button>
                             <button
                               onClick={() =>
@@ -834,23 +837,22 @@ export const ProjectComponents = ({
                         ) : (
                           <span
                             className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${
-                              phase.completed
+                              done
                                 ? "bg-emerald-100 text-emerald-800 border-emerald-200"
                                 : "bg-amber-100 text-amber-800 border-amber-200"
                             }`}
                           >
-                            {phase.completed ? "Completed" : "In Progress"}
+                            {done ? "Completed" : "In Progress"}
                           </span>
                         )}
                       </div>
-                      {phase.description && (
-                        <p className="text-[11px] text-stone-500 pl-6">
-                          {phase.description}
-                        </p>
+                       {phase.description && (
+                        <p className="text-[11px] text-stone-500 pl-6">{phase.description}</p>
                       )}
                     </div>
-                  ))
-                )}
+                    );
+                })
+              )}
               </div>
             </div>
           )}
@@ -916,11 +918,7 @@ export const ProjectComponents = ({
                     );
                     const postAuthor =
                       typeof item.author === "object" && item.author !== null
-                        ? item.author === "object"
-                          ? item.author
-                          : item.author.name ||
-                            item.author.username ||
-                            authorName
+                        ? item.author.name || item.author.username || authorName
                         : item.author || authorName;
                     <div
                       key={item._id || item.id || idx}
@@ -928,7 +926,7 @@ export const ProjectComponents = ({
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-stone-800">
-                          {postAuthor || item.author || authorName}
+                          {postAuthor}
                         </span>
                         <span
                           className="text-[10px] text-stone-400"
@@ -941,7 +939,7 @@ export const ProjectComponents = ({
                       <p className="text-xs text-stone-600 leading-relaxed">
                         {item.content || item.body || "No content provided."}
                       </p>
-                    </div>;
+                    </div>
                   })
                 )}
               </div>

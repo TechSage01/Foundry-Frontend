@@ -48,6 +48,7 @@ function Profile() {
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [reposts, setReposts] = useState([]);
+
   const [likedItems, setLikedItems] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
   const [totalLikes, setTotalLikes] = useState(0);
@@ -259,7 +260,7 @@ function Profile() {
       setUserProjects((prev) => [created, ...prev]);
       setProjectForm({
         title: "",
-        tagline: "",
+        tagLine: "",
         description: "",
         tech_stack: "",
         demo_url: "",
@@ -645,6 +646,25 @@ function Profile() {
       setDraftsLoading(false);
     }
   };
+  const fetchUserBookmarks = async () => {
+    try {
+      setBookmarksLoading(true);
+      const list = await fetchBookmarksApi();
+      setBookmarks(
+        Array.isArray(list)
+          ? list
+          : toArray(list, "posts", "items", "results", "rows"),
+      );
+    } catch (error) {
+      console.error(
+        "Failed to fetch bookmarks:",
+        error.response?.status,
+        error.response?.data,
+      );
+    } finally {
+      setBookmarksLoading(false);
+    }
+  };
   const handlePublishDraft = async (draft) => {
     const id = draft.id || draft._id;
     if (!id || publishingId) return;
@@ -704,6 +724,7 @@ function Profile() {
     setToast({ type, text });
     setTimeout(() => setToast({ type: "", text: "" }), 3000);
   };
+
   const handleQuickImageSelect = (e, type) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -791,6 +812,7 @@ function Profile() {
         setAvatarFile(null);
       } else {
         newUrl =
+          updated?.cover_image ||
           updated?.cover_url ||
           updated?.cover ||
           updated?.coverUrl ||
@@ -1068,6 +1090,8 @@ put("location", formData.location);
             <img
               src={
                 coverPreview ||
+                user?.cover_image ||
+                user?.cover_url ||
                 user?.cover ||
                 "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe"
               }
@@ -2417,6 +2441,7 @@ put("location", formData.location);
                 </button>
                 <input
                   type="file"
+                  ref={projectCoverInputRef}
                   accept="image/*"
                   className="hidden"
                   onChange={handleProjectCoverSelect}
@@ -2463,11 +2488,11 @@ put("location", formData.location);
                 <input
                   type="text"
                   placeholder="Technologies (comma separated)"
-                  value={projectForm.technologies}
+                  value={projectForm.tech_stack}
                   onChange={(e) =>
                     setProjectForm((p) => ({
                       ...p,
-                      technologies: e.target.value,
+                      tech_stack: e.target.value,
                     }))
                   }
                   className="w-full px-3.5 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm"
@@ -2602,7 +2627,14 @@ put("location", formData.location);
                 Cancel
               </button>
               <button
-                onClick={handleCreatePost}
+                onClick={() => handleCreatePost(false)}
+                disabled={creating}
+                className="px-4 py-2.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl"
+              >
+                Save Draft
+              </button>
+              <button
+                onClick={() => handleCreatePost(true)}
                 disabled={creating}
                 className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-[#A04622] hover:bg-[#85381a] rounded-xl disabled:opacity-50"
               >
