@@ -16,26 +16,52 @@ import messagesData from "../data/messagesData";
 import "./Messages.css";
 
 function Messages() {
-    const [activeConversationId, setActiveConversationId] = useState(1);
-    const [activeTab, setActiveTab] = useState("All");
-    const [messageText, setMessageText] = useState("");
+const [conversations, setConversations] = useState(messagesData);
+const [activeConversationId, setActiveConversationId] = useState(1);
+const [activeTab, setActiveTab] = useState("All");
+const [messageText, setMessageText] = useState("");
 
-    const activeConversation = messagesData.find(
-        (conversation) => conversation.id === activeConversationId
-    );
+   const activeConversation = conversations.find(
+  (conversation) => conversation.id === activeConversationId
+);
 
     const filteredConversations =
-        activeTab === "All"
-            ? messagesData
-            : messagesData.filter(
-                (conversation) => conversation.type === activeTab.toLowerCase()
-            );
+  activeTab === "All"
+    ? conversations
+    : conversations.filter(
+        (conversation) =>
+          conversation.type === activeTab.toLowerCase()
+      );
 
-    const handleSendMessage = () => {
-        if (!messageText.trim()) return;
+ const handleSendMessage = () => {
+  const trimmedMessage = messageText.trim();
 
-        setMessageText("");
-    };
+  if (!trimmedMessage) return;
+
+  const newMessage = {
+    id: Date.now(),
+    sender: "You",
+    avatar: null,
+    time: "Now",
+    text: trimmedMessage,
+    isOwn: true,
+  };
+
+  setConversations((currentConversations) =>
+    currentConversations.map((conversation) =>
+      conversation.id === activeConversationId
+        ? {
+            ...conversation,
+            messages: [...conversation.messages, newMessage],
+            preview: `You: ${trimmedMessage}`,
+            time: "Now",
+          }
+        : conversation
+    )
+  );
+
+  setMessageText("");
+};
 
     return (
         <MainLayout>
