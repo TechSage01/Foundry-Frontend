@@ -1,22 +1,22 @@
 
 :root {
-  --foundry-bg: #faf8f5;
+  --foundry-bg: #f9f8f6;
   --foundry-surface: #ffffff;
-  --foundry-surface-soft: #f7f4f1;
-  --foundry-surface-hover: #f2eeeb;
+  --foundry-surface-soft: #f5f0eb;
+  --foundry-surface-hover: #eee9e4;
 
-  --foundry-text: #292522;
-  --foundry-text-secondary: #625a54;
-  --foundry-text-muted: #8b817a;
-  --foundry-text-light: #aaa19a;
+  --foundry-text: #1f1f1f;
+  --foundry-text-secondary: #4f4843;
+  --foundry-text-muted: #737373;
+  --foundry-text-light: #a29b95;
 
-  --foundry-border: #e8e2dd;
-  --foundry-border-strong: #d9d0c9;
+  --foundry-border: #e7e0db;
+  --foundry-border-strong: #d8cec7;
 
-  --foundry-primary: #d87552;
-  --foundry-primary-dark: #bd5f40;
-  --foundry-primary-soft: #fff1eb;
-  --foundry-primary-border: #efc5b5;
+  --foundry-primary: #d97757;
+  --foundry-primary-dark: #b95e40;
+  --foundry-primary-soft: #fff0e9;
+  --foundry-primary-border: #edc3b4;
 }
 
 /* Notifications page */
