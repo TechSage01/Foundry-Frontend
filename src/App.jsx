@@ -21,6 +21,7 @@ import CreateOpportunity from './pages/CreateOpportunity.jsx'
 import Communities from './pages/Communities.jsx'
 import CreateCommunity from './pages/CreateCommunity.jsx'
 import Notifications from './pages/Notifications'
+import NotificationSettings from './pages/NotificationSettings'
 
 export default function App() {
   const [selectedTopic, setSelectedTopic] = React.useState(null)
@@ -83,6 +84,11 @@ export default function App() {
           />
 
           <Route path="/notifications" element={<Notifications />} />
+
+          <Route
+            path="/settings/notifications"
+            element={<NotificationSettings />}
+          />
         </Route>
       </Routes>
     </Router>

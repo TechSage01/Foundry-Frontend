@@ -1,25 +1,22 @@
 
 :root {
-  --foundry-bg: #faf8f5;
+  --foundry-bg: #f9f8f6;
   --foundry-surface: #ffffff;
-  --foundry-surface-soft: #f7f4f1;
-  --foundry-surface-hover: #f2eeeb;
+  --foundry-surface-soft: #f5f0eb;
+  --foundry-surface-hover: #eee9e4;
 
-  --foundry-text: #292522;
-  --foundry-text-secondary: #625a54;
-  --foundry-text-muted: #8b817a;
-  --foundry-text-light: #aaa19a;
+  --foundry-text: #1f1f1f;
+  --foundry-text-secondary: #4f4843;
+  --foundry-text-muted: #737373;
+  --foundry-text-light: #a29b95;
 
-  --foundry-border: #e8e2dd;
-  --foundry-border-strong: #d9d0c9;
+  --foundry-border: #e7e0db;
+  --foundry-border-strong: #d8cec7;
 
-  --foundry-primary: #d87552;
-  --foundry-primary-dark: #bd5f40;
-  --foundry-primary-soft: #fff1eb;
-  --foundry-primary-border: #efc5b5;
-
-  --foundry-success: #32916b;
-  --foundry-success-soft: #eaf7f0;
+  --foundry-primary: #d97757;
+  --foundry-primary-dark: #b95e40;
+  --foundry-primary-soft: #fff0e9;
+  --foundry-primary-border: #edc3b4;
 }
 
 /* Notifications page */
@@ -82,10 +79,26 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-top: 28px;
 }
 
-.notifications-mark-read,
+.notifications-mark-read{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--foundry-border);
+  border-radius: 10px;
+  background: var(--foundry-surface);
+  color: var(--foundry-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
 .notifications-settings {
   min-height: 40px;
   padding: 0 15px;
@@ -107,7 +120,10 @@
     border-color 0.2s ease;
 }
 
-.notifications-mark-read:hover,
+.notifications-mark-read:hover {
+  background: var(--foundry-surface-hover);
+  border-color: var(--foundry-border-strong);
+}
 .notifications-settings:hover {
   background: var(--foundry-surface-hover);
   border-color: var(--foundry-border);
