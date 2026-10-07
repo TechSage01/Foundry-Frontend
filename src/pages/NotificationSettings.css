@@ -182,7 +182,7 @@
 
 .notification-toggle--active {
   border-color: var(--foundry-primary);
-  background: var(foundry-primary);
+  background: var(--foundry-primary);
 }
 .notification-toggle--active .notification-toggle__knob {
   transform: translateX(20px);
@@ -198,7 +198,7 @@
 }
 
 /* Save area  */
-.notification-setting-footer {
+.notification-settings-footer {
   display: flex;
   justify-content: flex-end;
   margin-top: 24px;
@@ -237,4 +237,69 @@
 .notification-save-button:focus-visible {
   outline: 2px solid var(--foundry-primary);
   outline-offset: 3px;
+}
+
+/* Responsiveness */
+@media (max-width: 850px) {
+  .notification-settings-page {
+    padding: 28px 22px 50px;
+  }
+  .notification-settings-main {
+    max-width: 760px;
+  }
+}
+
+@media (max-width: 600px) {
+  .notification-settings-page {
+    padding: 24px 16px 40px;
+  }
+  .notification-settings-header {
+    margin-bottom: 22px;
+  }
+  .notification-settings-header h1 {
+    font-size: 30px;
+  }
+  .notification-settings-header p {
+    font-size: 14px;
+  }
+  .notification-settings-card-header {
+    padding: 18px;
+  }
+  .notification-setting-row {
+    gap: 12px;
+    min-height: 78px;
+    padding: 16px 18px;
+  }
+  .notification-setting-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .notification-setting-info h3 {
+    font-size: 13px;
+  }
+  .notification-setting-info p {
+    font-size: 12px;
+  }
+  .notification-settings-footer {
+    margin-top: 18px;
+  }
+  .notification-save-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .notification-settings-card-header {
+    gap: 11px;
+  }
+  .notification-settings-card-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .notification-setting-row {
+    align-items: flex-start;
+  }
+  .notification-toggle {
+    margin-top: 2px;
+  }
 }
