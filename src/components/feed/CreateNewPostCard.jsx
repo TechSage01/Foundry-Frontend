@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { createPostApi } from "../../services/posts";
 
-
 const CreateNewPostCard = ({
   onAddPostSuccess,
   userAvatar,
@@ -28,17 +27,49 @@ const CreateNewPostCard = ({
   const [errorMessage, setErrorMessage] = useState("");
   const fileInputRef = useRef(null);
 
+  const formatPostTime = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    return date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
   const handleMediaChange = (e) => {
     e.stopPropagation();
     const file = e.target.files?.[0];
-    if(!file) return;
-    if (file) {
-      const isVideo = file.type.startsWith("video/");
-      setSelectedMedia({
-        url: URL.createObjectURL(file),
-        type: isVideo ? "video" : "image",
-      });
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video/");
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      setErrorMessage(
+        isVideo
+          ? "Video is too large. Max size is 50MB."
+          : "Image is too large. Max size is 5MB.",
+      );
+      return;
     }
+
+    setSelectedMedia({
+      url: URL.createObjectURL(file),
+      type: isVideo ? "video" : "image",
+      file,
+    });
   };
   const triggerFileInput = (acceptType) => {
     setMediaType(acceptType);
@@ -49,43 +80,59 @@ const CreateNewPostCard = ({
     setSelectedCategory((prev) => (prev === category ? "Trending" : category));
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (isSubmitting) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    const title = isArticleMode
+      ? articleTitle.trim()
+      : content.trim().slice(0, 80);
+    if (isArticleMode) {
+      if (!articleTitle.trim())
+        return setErrorMessage("Please enter an article title.");
+      if (!content.trim())
+        return setErrorMessage("Please write content for your article.");
+    } else if (!content.trim() && !selectedMedia) {
+      return setErrorMessage("Please write something or attach media to post.");
+    }
 
-  if (isArticleMode) {
-    if (!articleTitle.trim()) return setErrorMessage("Please enter an article title.");
-    if (!content.trim()) return setErrorMessage("Please write content for your article.");
-  } else if (!content.trim() && !selectedMedia) {
-    return setErrorMessage("Please write something or attach media to post.");
-  }
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content.trim());
+      formData.append("is_published", true);
+      if (selectedCategory && selectedCategory !== "Trending") {
+        formData.append("tags", selectedCategory);
+      }
+      if (selectedMedia?.file) {
+        if (selectedMedia.type === "video") {
+          formData.append("video", selectedMedia.file);
+        } else {
+          formData.append("cover_image", selectedMedia.file);
+        }
+      }
+      const newPost = await createPostApi(formData);
+      if (onAddPostSuccess) onAddPostSuccess(newPost);
 
-  setIsSubmitting(true);
-  try {
-    const payload = {
-      author: userName,
-      avatar: userAvatar,
-      isArticle: isArticleMode,
-      title: isArticleMode ? articleTitle.trim() : null,
-      content: content.trim(),
-      mediaUrl: selectedMedia?.url || null,
-      category: selectedCategory,
-    };
-
-    const newPost = await createPostApi(payload);
-    if (onAddPostSuccess) onAddPostSuccess(newPost);
-
-    setContent("");
-    setArticleTitle("");
+      setContent("");
+      setArticleTitle("");
+      clearMedia();
+      // setSelectedMedia(null);
+      setIsArticleMode(false);
+      setErrorMessage("");
+    } catch (error) {
+      console.error("Post creation failed:", error.response?.data || error);
+  setErrorMessage(
+    error.response?.data?.message || "Failed to post update. Please try again.",
+  );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const clearMedia = () => {
+    if (selectedMedia?.url) URL.revokeObjectURL(selectedMedia.url);
     setSelectedMedia(null);
-    setIsArticleMode(false);
-    setErrorMessage("");
-  } catch (error) {
-    setErrorMessage("Failed to post update. Please try again.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
   return (
     <div className="bg-white p-4 rounded-2xl  border border-stone-200/80 shadow-sm space-y-3 font-sans">
       <div className="flex items-center gap-3">
@@ -169,7 +216,7 @@ const CreateNewPostCard = ({
               )}
               <button
                 type="button"
-                onClick={() => setSelectedMedia(null)}
+                onClick={clearMedia}
                 className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1 rounded-full cursor-pointer transition-colors"
               >
                 <X size={14} />

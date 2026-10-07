@@ -132,7 +132,7 @@ const PostCard = ({ post }) => {
       </div>
     )}
     <p className='text-sm text-stone-700 leading-relaxed'>
-      {post.content.split(' ').map((word, i) => 
+      {post.content || "".split(',').filter(Boolean, (word, i) => 
         word.startsWith('H') ? (
           <span key={i} className='text-[#D97757] font-medium mr-1'>
             {word}{' '}

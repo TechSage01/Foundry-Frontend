@@ -18,12 +18,37 @@ import {
   Send,
   Upload,
   Search,
-  // Trash2,
+  UserPlus,
   Edit3,
 } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import api from "../services/api";
-
+const formatPostTime = (dateInput) => {
+  if (!dateInput) return { relative: "Recently", exact: "" };
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return { relative: "Recently", exact: "" };
+  const exact = date.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  let relative;
+  if (diffInSeconds < 45) relative = "Just now";
+  else if (diffInSeconds < 90) relative = "1 minute ago";
+  else if (diffInSeconds < 3600)
+    relative = `${Math.max(1, Math.round(diffSec / 60))} min ago`;
+  else if (diffInSeconds < 7200) relative = "1 hour ago";
+  else if (diffInSeconds < 86400) {
+    const h = Math.floor(diffInSeconds / 3600);
+    relative = `${h} hour${h > 1 ? "s" : ""} ago`;
+  } else if (diffInSeconds < 7 * 86400) {
+    const d = Math.floor(diffInSeconds / 86400);
+    relative = `${d} day${d > 1 ? "s" : ""} ago`;
+  } else relative = exact;
+  return { relative, exact };
+};
+const isDone = (p) =>
+  Boolean(p?.is_completed ?? p?.done ?? p?.isCompleted ?? p?.isDone);
 export const ProjectComponents = ({
   project: initialProject = {},
   currentUser = {},
@@ -67,7 +92,6 @@ export const ProjectComponents = ({
     currentUser?._id || currentUser?.id || currentUser?.userId || "",
   ).trim();
 
-
   // 2. Extract Current User Name / Handle
   const currentUsername = String(
     currentUser?.username ||
@@ -78,14 +102,14 @@ export const ProjectComponents = ({
   )
     .toLowerCase()
     .trim();
-    const authorObj =
+  const authorObj =
     typeof project?.author === "object" && project?.author !== null
       ? project.author
       : typeof project?.user === "object" && project?.user !== null
-      ? project.user
-      : null;
+        ? project.user
+        : null;
 
-const rawUserId =
+  const rawUserId =
     authorObj?._id ||
     authorObj?.id ||
     project?.author_id ||
@@ -94,26 +118,26 @@ const rawUserId =
     (typeof project?.author === "string" ? project.author : "") ||
     (typeof project?.user === "string" ? project.user : "");
 
-const authorId = String(
-  typeof rawUserId === "object" && rawUserId !== null 
-    ? rawUserId._id || rawUserId.id 
-    : rawUserId
-)
-  .trim()
-  .replace(/^"|"$/g, ""); 
-  
-const projectUsername = String(
-  authorObj?.username ||
+  const authorId = String(
+    typeof rawUserId === "object" && rawUserId !== null
+      ? rawUserId._id || rawUserId.id
+      : rawUserId,
+  )
+    .trim()
+    .replace(/^"|"$/g, "");
+
+  const projectUsername = String(
+    authorObj?.username ||
       project?.author_name ||
       project?.authorName ||
       project?.username ||
-      ""
+      "",
   )
     .toLowerCase()
     .trim();
 
-// Resolve Author Name display
-const authorName =
+  // Resolve Author Name display
+  const authorName =
     authorObj?.full_name ||
     authorObj?.fullName ||
     authorObj?.name ||
@@ -123,7 +147,6 @@ const authorName =
     project?.username ||
     "Developer";
 
-  
   const authorAvatar =
     typeof authorObj === "object" && authorObj !== null
       ? authorObj?.profilePicture ||
@@ -136,37 +159,25 @@ const authorName =
     authorName,
   )}&background=A04622&color=fff`;
 
-const matchesId = Boolean(
-  currentUserId && authorId && String(currentUserId) === String(authorId)
-);
-
-const matchesUsername = Boolean(
-  currentUsername &&
-  projectUsername &&
-  currentUsername.toLowerCase() === projectUsername.toLowerCase()
-);
-
-// const isAuthor = Boolean(
-  const isAuthor = Boolean(
-    Boolean(isAuthorProp) || matchesId || matchesUsername
+  const matchesId = Boolean(
+    currentUserId && authorId && String(currentUserId) === String(authorId),
   );
-  
 
-console.log("AUTHOR EVALUATION RESULT:", { matchesId, matchesUsername, isAuthor });
+  const matchesUsername = Boolean(
+    currentUsername &&
+    projectUsername &&
+    currentUsername.toLowerCase() === projectUsername.toLowerCase(),
+  );
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((n) => n + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
-  console.log("DEBUG AUTHOR CHECK:", {
-    currentUserId,
-    authorId,
-    currentUsername,
-    projectUsername,
-    isAuthorProp,
-    isAuthor,
-  });
-
+  const isAuthor = Boolean(
+    Boolean(isAuthorProp) || matchesId || matchesUsername,
+  );
   const projectId = project._id || project.id;
-console.log("PROJECT KEYS:", Object.keys(project || {}));
-console.log("FULL PROJECT OBJ:", project);
-  // Sync prop changes
   useEffect(() => {
     setProject(initialProject);
     setPhases(initialProject.phases || []);
@@ -229,7 +240,6 @@ console.log("FULL PROJECT OBJ:", project);
   };
 
   // Add Phase Handler
- // Add Phase Handler
   const handleAddPhase = async (e) => {
     e.preventDefault();
     if (!isAuthor || !newPhaseTitle.trim()) return;
@@ -245,44 +255,77 @@ console.log("FULL PROJECT OBJ:", project);
     ];
 
     try {
-      /* 🔴 Commented out until backend roadmap endpoint is ready
-      if (api) {
-        await api.put(`/api/projects/${projectId}`, { phases: updatedPhases });
-      }
-      */
+      const res = await api.post(`/api/projects/${projectId}/phases`, {
+        title: newPhaseTitle,
+        description: newPhaseDesc,
+        completed: false,
+      });
+      const created =
+        res.data?.data ||
+        res.data?.phase ||
+        res.data ||
+        updatedPhases[updatedPhases.length - 1];
 
-      // 🟢 Local UI State Update
-      setPhases(updatedPhases);
+      setPhases((prev) => [...prev, created]);
       setNewPhaseTitle("");
       setNewPhaseDesc("");
       setShowAddPhase(false);
     } catch (err) {
       console.error("Failed to add phase:", err);
-      alert("Could not update roadmap phase.");
+      alert(err.response?.data?.message || "Could not update roadmap phase.");
     }
   };
 
   // Toggle Phase Completion
   const handleTogglePhase = async (index) => {
     if (!isAuthor) return;
-    const updatedPhases = phases.map((p, idx) =>
-      idx === index ? { ...p, completed: !p.completed } : p,
-    );
+
+    const phase = phases[index];
+    if (!phase) return;
+
+    const phaseId = phase._id || phase.id;
+    if (!phaseId) return;
 
     try {
-      /*  Commented out until backend roadmap endpoint is ready
-      if (api) {
-        await api.put(`/api/projects/${projectId}`, { phases: updatedPhases });
-      }
-      */
-
-      // Local UI State Update
-      setPhases(updatedPhases);
+      const res = await api.patch(`/api/projects/phases/${phaseId}/toggle`);
+      const updated = res.data?.data || res.data?.phase || res.data;
+      const serverValue =
+        updated?.completed ??
+        updated?.is_completed ??
+        updated?.done ??
+        updated?.isDone;
+      setPhases((prev) =>
+        prev.map((p, i) =>
+          i === index
+            ? {
+                ...p,
+                is_completed: next,
+                completed: next,
+              }
+            : p,
+        ),
+      );
     } catch (err) {
       console.error("Failed to update phase status:", err);
+      alert(err.response?.data?.message || "could not update phase");
     }
   };
-
+  const handleDeletePhases = async (phaseId, title) => {
+    if (!isAuthor || !phaseId) return;
+    if (
+      !window.confirm(`Delete phase "${title}"? This action cannot be undone.`)
+    )
+      return;
+    const previous = phases;
+    setPhases((prev) => prev.filter((p) => (p._id || p.id) !== phaseId));
+    try {
+      await api.delete(`/api/projects/phases/${phaseId}`);
+    } catch (err) {
+      console.error("Failed to delete phase:", err);
+      setPhases(previous);
+      alert(err.response?.data?.message || "Could not delete phase.");
+    }
+  };
   // Add Update Post Handler
   const handleAddUpdate = async (e) => {
     e.preventDefault();
@@ -301,13 +344,17 @@ console.log("FULL PROJECT OBJ:", project);
 
         const response = await api.post("/api/posts", payload);
 
-        const createdPost = response.data?.post || response.data || {
+        const createdPost = {
           content: newUpdateText,
-          createdAt: new Date().toISOString(),
+          createdAt: response.data?.createdAt || new Date().toISOString(),
           author: authorName,
+          ...(response.data?.post ||
+            response.data?.data ||
+            response.data ||
+            {}),
         };
 
-        setUpdates([createdPost, ...updates]);
+        setUpdates((prev) => [createdPost, ...prev]);
       } else {
         const localEntry = {
           content: newUpdateText,
@@ -323,18 +370,28 @@ console.log("FULL PROJECT OBJ:", project);
       console.error("Failed to post update:", err.response?.data || err);
       // Display specific validation message returned from backend
       alert(
-        err.response?.data?.message || 
-        err.response?.data?.error || 
-        "Failed to post update. Check request validation."
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Failed to post update. Check request validation.",
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStarToggle = () => {
-    setStarred(!starred);
-    setStarCount((prev) => (starred ? prev - 1 : prev + 1));
+  const handleStarToggle = async () => {
+    const previousStarred = starred;
+    const previousStarCount = starCount;
+    setStarred(!previousStarred);
+    setStarCount((prev) => (previousStarred ? prev - 1 : prev + 1));
+
+    try {
+      const res = await api.post(`/api/projects/${projectId}/likes`);
+    } catch (err) {
+      console.error("Failed to toggle like", err);
+      setStarred(previousStarred);
+      setStarCount(previousStarCount);
+    }
   };
 
   const handleShare = async () => {
@@ -668,6 +725,10 @@ console.log("FULL PROJECT OBJ:", project);
                 <h2 className="text-sm font-bold text-stone-900">
                   Interactive Journey & Roadmap
                 </h2>
+                <p className="text-[10px] text-stone-400">
+                  debug: projectId={String(projectId)} isAuthor=
+                  {String(isAuthor)} phases={phases.length}
+                </p>
 
                 {/* RESTRICTED: Only Author can add Roadmap Phases */}
                 {isAuthor && (
@@ -744,16 +805,32 @@ console.log("FULL PROJECT OBJ:", project);
 
                         {/* RESTRICTED: Only Author can toggle phase status */}
                         {isAuthor ? (
-                          <button
-                            onClick={() => handleTogglePhase(idx)}
-                            className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold cursor-pointer border transition-colors ${
-                              phase.completed
-                                ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200"
-                                : "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
-                            }`}
-                          >
-                            {phase.completed ? "Completed ✓" : "Mark Completed"}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleTogglePhase(idx)}
+                              className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold cursor-pointer border transition-colors ${
+                                phase.completed
+                                  ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200"
+                                  : "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
+                              }`}
+                            >
+                              {phase.completed
+                                ? "Completed ✓"
+                                : "Mark Completed"}
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeletePhases(
+                                  phase._id || phase.id,
+                                  phase.title,
+                                )
+                              }
+                              title="Delete Phase"
+                              className="p-1 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         ) : (
                           <span
                             className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${
@@ -833,26 +910,39 @@ console.log("FULL PROJECT OBJ:", project);
                     No updates logged yet.
                   </p>
                 ) : (
-                  updates.map((item, idx) => (
+                  updates.map((item, idx) => {
+                    const t = formatPostTime(
+                      item.createdAt || item.updatedAt || item.created_at,
+                    );
+                    const postAuthor =
+                      typeof item.author === "object" && item.author !== null
+                        ? item.author === "object"
+                          ? item.author
+                          : item.author.name ||
+                            item.author.username ||
+                            authorName
+                        : item.author || authorName;
                     <div
-                      key={idx}
+                      key={item._id || item.id || idx}
                       className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-stone-800">
-                          {item.author || authorName}
+                          {postAuthor || item.author || authorName}
                         </span>
-                        <span className="text-[10px] text-stone-400">
-                          {item.createdAt
-                            ? new Date(item.createdAt).toLocaleDateString()
-                            : "Recently"}
+                        <span
+                          className="text-[10px] text-stone-400"
+                          title={t.exact}
+                        >
+                          {t.relative}
+                          {t.exact && t.relative !== t.exact && ` · ${t.exact}`}
                         </span>
                       </div>
                       <p className="text-xs text-stone-600 leading-relaxed">
-                        {item.content}
+                        {item.content || item.body || "No content provided."}
                       </p>
-                    </div>
-                  ))
+                    </div>;
+                  })
                 )}
               </div>
             </div>
