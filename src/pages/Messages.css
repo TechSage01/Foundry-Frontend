@@ -80,39 +80,41 @@
 
 /* Conversations search */
 .messages-search {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    height: 40px;
-    padding: 0 13px;
-    margin-bottom: 14px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    background: var(--foundry-surface);
-    color: var(--foundry-surface);
-    transition: 
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 13px;
+  margin-bottom: 14px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: var(--foundry-surface);
+  color: var(--foundry-text-muted);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .messages-search:focus-within {
-    border-color: var(--foundry-primary-border);
-    box-shadow: 0 0 0 3px var(--foundry-primary-soft);
+  border-color: var(--foundry-primary-border);
+  box-shadow: 0 0 0 3px var(--foundry-primary-soft);
 }
 
-.messages-search-input {
-    width: 100%;
-    padding: 0;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: var(--foundry-text);
-    font-family: inherit;
-    font-size: 13px;
+.messages-search input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--foundry-text);
+  font-family: inherit;
+  font-size: 13px;
 }
+
 .messages-search input::placeholder {
-    color: var(--foundry-text-muted);
+  color: var(--foundry-text-muted);
 }
+
 
 /* Conversation tabs */
 .messages-tabs {
@@ -657,4 +659,7 @@
     background: var(--foundry-border-strong);
 }
 
-
+/* responsive */
+@media (max-width: 1050px) {
+    
+}
