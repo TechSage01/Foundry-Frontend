@@ -545,3 +545,116 @@
     background: var(--foundry-surface-hover);
     color: var(--foundry-text);
 }
+
+/* Message composer */
+.message-composer {
+    position: relative;
+    flex-shrink: 0;
+    margin: 0 28px 22px;
+    padding: 14px 15px 12px;
+    border: 1px solid var(--foundry-border);
+    border-radius: 14px;
+    background: var(--foundry-surface);
+}
+
+.message-composer > input {
+    width: 100%;
+    padding: 0 0 15px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--foundry-text);
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 14px;
+}
+
+.message-composer > input::placeholder {
+    color: var(--foundry-text-secondary);
+}
+.composer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.composer-tools {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.composer-tools button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--foundry-text-secondary);
+    cursor: pointer;
+    transition: 
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.composer-tools button:hover {
+    background: var(--foundry-surface-hover);
+    color: var(--foundry-text);
+}
+
+/* send button */
+.send-message-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 92px;
+    height: 40px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--foundry-primary-dark);
+    color: var(--foundry-surface);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 
+        background 0.2s ease,
+        transform 0.15s ease;
+}
+
+.send-message-button:hover {
+    background: var(--foundry-primary);
+}
+
+.send-message-button:active {
+    transform: translateY(1px);
+}
+
+/* scrollbars */
+.conversation-list,
+.conversation-messages {
+    scrollbar-width: thin;
+    scrollbar-color: var(--foundry-border-strong) transparent;
+}
+
+.conversation-list::-webkit-scrollbar,
+.conversation-messages::-webkit-scrollbar {
+    width: 5px;
+}
+
+.conversation-list::-webkit-scrollbar-track,
+.conversation-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.conversation-list::-webkit-scrollbar-thumb,
+.conversation-messages::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--foundry-border-strong);
+}
+
+
