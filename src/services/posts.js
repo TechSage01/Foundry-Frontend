@@ -42,23 +42,78 @@ export const deletePostApi = async (id) => {
 };
 
 export const toggleLikeApi = async (postId) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/like`, { method: "POST" });
-  return res.json();
+  const res = await api.post(`/api/posts/${postId}/likes`);
+  return res.data?.data || res.data?.post || res.data;
+};
+export const fetchCommentsApi = async (postId) => {
+  const res = await api.get(`/api/posts/${postId}/comments`);
+  const data = res.data?.data || res.data?.comments || res.data;
+  return Array.isArray(data) ? data : [];
 };
 
-export const addCommentApi = async (postId, text) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/comments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+export const addCommentApi = async (postId, text, parentId = null) => {
+  const res = await api.post(`/api/posts/${postId}/comments`, {
+   content: text,
+   parentId: parentId,
   });
-  return res.json();
+  return res.data?.data || res.data?.comment || res.data;
 };
+export const setRepostApi = async (postId, isReposting) => {
+  const res = isReposting
+    ? await api.post(`/api/posts/${postId}/repost`)
+    : await api.delete(`/api/posts/${postId}/repost`);
+  return res.data?.data || res.data;
+};
+export const deleteCommentApi = async (postId, commentId) => {
+  const res = await api.delete(`/api/posts/${postId}/comments/${commentId}`);
+  return res.data?.data || res.data?.comment || res.data;
+}
+export const setBookmarkApi = async (postId, isBookmarking) => {
+  const res = isBookmarking
+    ? await api.post(`/api/posts/${postId}/bookmarks`)
+    : await api.delete(`/api/posts/${postId}/bookmarks`);
+  return res.data?.data || res.data?.post || res.data;
+};
+export const fetchBookmarksApi = async () => {
+ try {
+   const res = await api.get(`/api/posts/me/bookmarks`);
+  const data = res.data?.data || res.data?.posts || res.data;
+  return Array.isArray(data) ? data : [];
+ } catch {
+  if(err.response?.status === 404) return [];
+ }
+}
 
-export const toggleBookmarkApi = async (postId) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/bookmark`, { method: "POST" });
-  return res.json();
-};
+export const uploadAvatarApi = async (file, user) => {
+  const formData = new FormData(); // must be the FIRST line
+
+  formData.append("username", user?.username || "");
+  formData.append("headline", user?.headline || "");
+  formData.append("bio", user?.bio || "");
+  formData.append("location", user?.location || "");
+
+  let skills = user?.skills ?? [];
+  if (typeof skills === "string") {
+    try {
+      skills = JSON.parse(skills);
+    } catch {
+      skills = skills.split(",").map((t) => t.trim()).filter(Boolean);
+    }
+  }
+  formData.append("skills", JSON.stringify(Array.isArray(skills) ? skills : []));
+  formData.append("avatar", file);
+
+  const res = await api.put("/api/profile", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  const data = res.data?.data || res.data?.user || res.data;
+  const direct = data?.avatar_url || data?.avatar || data?.avatarUrl;
+  if (direct) return direct;
+
+  const me = await api.get("/api/auth/me");
+  const m = me.data?.data || me.data?.user || me.data;
+  return m?.avatar_url || m?.avatar || URL.createObjectURL(file);
+}
 
 export const toggleRepostApi = async (postId) => {
   const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/repost`, { method: "POST" });

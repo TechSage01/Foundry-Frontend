@@ -1,8 +1,12 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import MainLayout from "../components/layout/MainLayout";
-
+import { 
+  createOpportunityApi,
+  updateOpportunityApi,
+  fetchOpportunityApi,
+} from "../services/opportunities";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -27,10 +31,28 @@ import {
   Users,
   X,
   Zap,
+  Loader2,
 } from "lucide-react";
+
+const CATEGORY_VALUE = {
+  "Full-time Job": "Full-time",
+  "Co-founder": "Co-founder",
+  "OSBounty": "Os Bounty",
+  Hackathon: "Hackathon",
+  "Grant / Fund": "Grant",
+  Freelance: "Freelance",
+};
+
+const ARRANGEMENT_VALUE = {
+  Remote: "remote",
+  Hybrid: "hybrid",
+  "On-site": "on-site",
+};
 
 function CreateOpportunity() {
   const navigate = useNavigate();
+  const { id: editId } = useParams();
+  const isEditing = Boolean(editId);
   const opportunityTypes = [
     {
       name: "Full-time Job",
@@ -60,26 +82,17 @@ function CreateOpportunity() {
 
   const [opportunityType, setOpportunityType] = useState("Full-time Job");
 
-  const [title, setTitle] = useState("Senior Rust & WebGPU Graphics Engineer");
+  const [title, setTitle] = useState("");
 
   const [linkedProject, setLinkedProject] = useState(
     "Aether Spatial Engine (Active)",
   );
 
-  const [hiringTeam, setHiringTeam] = useState(
-    "Graphics Runtime & Shaders Pod",
-  );
+  const [hiringTeam, setHiringTeam] = useState( "Graphics Runtime & Shaders Pod");
 
-  const [overview, setOverview] = useState(
-    "We're building the next-generation low-latency rendering pipeline for decentralized spatial simulations. You will design new WebGPU shader graph, optimize compute shaders in WGSL, and interface directly with our Rust-based deterministic physics engine. Candidates should be comfortable profiling memory bottlenecks in native WASM runtimes.",
-  );
+  const [overview, setOverview] = useState("");
 
-  const [skills, setSkills] = useState([
-    "Rust",
-    "WebGPU / WGSL",
-    "WASM",
-    "Computer Graphics",
-  ]);
+  const [skills, setSkills] = useState([]);
 
   const suggestedSkills = ["TypeScript", "Distributed Systems", "GLSL"];
 
@@ -87,35 +100,32 @@ function CreateOpportunity() {
 
   const [workArrangement, setWorkArrangement] = useState("Remote");
 
-  const [location, setLocation] = useState("Global Remote (UTC-8 to UTC)");
+  const [location, setLocation] = useState("");
 
   const [currency, setCurrency] = useState("USD ($)");
 
-  const [minPay, setMinPay] = useState("160,000");
+  const [minPay, setMinPay] = useState("");
 
-  const [maxPay, setMaxPay] = useState("210,000");
+  const [maxPay, setMaxPay] = useState("");
 
   const [payPeriod, setPayPeriod] = useState("yr");
 
-  const [includesEquity, setIncludesEquity] = useState(true);
+  const [includesEquity, setIncludesEquity] = useState(false);
 
   const [tokenGrant, setTokenGrant] = useState(false);
 
-  const [deadline, setDeadline] = useState("2025-04-30");
+  const [deadline, setDeadline] = useState("");
 
   const [startWindow, setStartWindow] = useState("Within 30 days");
   const [fastApply, setFastApply] = useState(true);
 
-  const [applicationUrl, setApplicationUrl] = useState(
-    "https://jobs.lever.co/aether-engine/senior-graphics-engineer",
-  );
+  const [applicationUrl, setApplicationUrl] = useState("");
 
-  const [screeningQuestion, setScreeningQuestion] = useState(
-    "Share a link to a WebGPU shader or Rust crate you authored, along with the toughest GPU memory profiling challenge you solved.",
-  );
-
+  const [screeningQuestion, setScreeningQuestion] = useState("");
+  
   const [isSaved, setIsSaved] = useState(false);
-
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
   const handleSkillKeyDown = (event) => {
     if (event.key !== "Enter") return;
 
@@ -150,44 +160,127 @@ function CreateOpportunity() {
     }, 2500);
   };
 
-  const handlePublish = (event) => {
-    event.preventDefault();
+  // Pre-fill the form when editing an existing opportunity
+  useEffect(() => {
+    if (!editId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const o = await fetchOpportunityApi(editId);
+        if (cancelled || !o) return;
+        const typeName =
+          Object.keys(CATEGORY_VALUE).find(
+            (k) => CATEGORY_VALUE[k].toLowerCase() === String(o.category).toLowerCase(),
+          ) || "Full-time Job";
+        const arrName =
+          Object.keys(ARRANGEMENT_VALUE).find(
+            (k) => ARRANGEMENT_VALUE[k] === String(o.work_arrangement).toLowerCase(),
+          ) || "Remote";
+        let sk = o.required_skills;
+        if (typeof sk === "string") {
+          try { sk = JSON.parse(sk); } catch { sk = sk.split(","); }
+        }
+        setOpportunityType(typeName);
+        setTitle(o.title || "");
+        setOverview(o.description || "");
+        setSkills(Array.isArray(sk) ? sk.map((x) => String(x).trim()).filter(Boolean) : []);
+        setWorkArrangement(arrName);
+        setLocation(o.location_range || "");
+        setDeadline(o.deadline_at ? String(o.deadline_at).slice(0, 10) : "");
+        setFastApply(Boolean(o.fast_apply_enabled));
+        setApplicationUrl(o.external_apply_url || "");
+        setScreeningQuestion(o.screening_prompt || "");
+        // best-effort parse of "USD 1500 - 2500 / yr + Equity"
+        const m = String(o.compensation || "").match(
+          /^([A-Z]{3})\s+([\d.,]+)(?:\s*-\s*([\d.,]+))?\s*\/\s*(\w+)/,
+        );
+        if (m) {
+          setMinPay(m[2] || "");
+          setMaxPay(m[3] || "");
+          setPayPeriod(m[4] || "yr");
+          setIncludesEquity(/Equity/i.test(o.compensation));
+          setTokenGrant(/Token grant/i.test(o.compensation));
+        }
+      } catch (err) {
+        console.error("load opportunity for edit failed:", err.response?.status, err.message);
+        setPublishError("Could not load this opportunity for editing.");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editId]);
 
-    const opportunity = {
-      opportunityType,
-      title,
-      linkedProject,
-      hiringTeam,
-      overview,
-      skills,
-      workArrangement,
-      location,
-      compensation: {
-        currency,
-        minPay,
-        maxPay,
-        payPeriod,
-        includesEquity,
-        tokenGrant,
-      },
-      deadline,
-      startWindow,
-      fastApply,
-      applicationUrl,
-      screeningQuestion,
-    };
-
-    console.log("Opportunity ready to publish:", opportunity);
+  const buildCompensation = () => {
+    const code = currency.split(" ")[0]; // "USD ($)" -> "USD"
+    const min = minPay.trim();
+    const max = maxPay.trim();
+    if (!min && !max) return null;
+    const range = min && max ? `${min} - ${max}` : min || max;
+    const extras = [includesEquity && "Equity", tokenGrant && "Token grant"]
+      .filter(Boolean)
+      .join(" + ");
+    return `${code} ${range} / ${payPeriod}${extras ? ` + ${extras}` : ""}`;
   };
 
-  const previewTitle = title || "Senior Rust & WebGPU Graphics Engineer";
+  const handlePublish = async (event) => {
+    event.preventDefault();
+    if (isPublishing) return;
+
+    if (!title.trim() || !overview.trim()) {
+      setPublishError("Please add a title and a description.");
+      return;
+    }
+
+    setPublishError("");
+    setIsPublishing(true);
+    try {
+      const body = {
+        category: CATEGORY_VALUE[opportunityType] || opportunityType,
+        title: title.trim(),
+        description: overview.trim(),
+        required_skills: skills,
+        work_arrangement: ARRANGEMENT_VALUE[workArrangement],
+        location_range: location.trim(),
+        compensation: buildCompensation(),
+        deadline_at: deadline ? new Date(`${deadline}T23:59:59`).toISOString() : null,
+        fast_apply_enabled: fastApply,
+        external_apply_url: applicationUrl.trim(),
+        screening_prompt: screeningQuestion.trim(),
+      };
+      if (isEditing) {
+        await updateOpportunityApi(editId, body);
+        navigate(`/opportunities/${editId}`);
+      } else {
+        await createOpportunityApi(body);
+        navigate("/opportunities");
+      }
+    } catch (error) {
+      console.error(
+        "Publish opportunity failed:",
+        error.response?.status,
+        error.response?.data,
+      );
+      const d = error.response?.data;
+      setPublishError(
+        d?.message ||
+          (typeof d?.details === "string"
+            ? d.details
+            : d?.details && JSON.stringify(d.details)) ||
+          error.message ||
+          "Could not publish this opportunity.",
+      );
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const previewTitle = title || "Your opportunity title";
 
   const previewDescription =
     overview || "Your opportunity description will appear here.";
 
-  const previewLocation = location || "Global Remote";
+  const previewLocation = location || "Location not set";
 
-  const previewCompensation = `${currency} ${minPay} - ${maxPay} / ${payPeriod}`;
+  const previewCompensation = buildCompensation() || "Compensation not set";
 
   return (
     <MainLayout>
@@ -231,7 +324,7 @@ function CreateOpportunity() {
               Foundry Builder Network Reach · 42,000+ Engineers & Founders
             </span>
 
-            <h1>Create & Publish an Opportunity</h1>
+            <h1>{isEditing ? "Edit Opportunity" : "Create & Publish an Opportunity"}</h1>
 
             <p>
               Connect with verified builders, open-source contributors,
@@ -861,6 +954,15 @@ function CreateOpportunity() {
           </aside>
         </div>
 
+        {publishError && (
+          <p
+            role="alert"
+            style={{ color: "#b91c1c", fontSize: 13, fontWeight: 600, margin: "0 0 12px" }}
+          >
+            {publishError}
+          </p>
+        )}
+
         <div className="create-opportunity-footer">
           <button
             type="button"
@@ -878,9 +980,13 @@ function CreateOpportunity() {
             <span>$0 publication fee</span>
           </div>
 
-          <button type="submit" className="publish-opportunity-button">
+          <button
+            type="submit"
+            className="publish-opportunity-button"
+            disabled={isPublishing}
+          >
             <Rocket size={15} />
-            Publish Opportunity
+            {isPublishing ? (isEditing ? "Saving..." : "Publishing...") : isEditing ? "Save Changes" : "Publish Opportunity"}
           </button>
         </div>
       </form>

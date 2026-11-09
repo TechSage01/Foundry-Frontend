@@ -1,33 +1,52 @@
 import React, { useState, useEffect } from "react";
 import CreateNewPostCard from "../components/feed/CreateNewPostCard";
 import FeedFilter from "../components/feed/FeedFilter";
-import MainLayout from "../components/layout/MainLayout";
+// import MainLayout from "../components/layout/MainLayout";
 import PostCard from "../components/feed/PostCard";
-import { dummyPosts } from "../data/post";
-import RightSidebar from "../components/layout/RightSidebar";
-import { fetchPosts } from "../services/posts";
+// import { fetchPosts } from "../services/posts";
+import api from "../services/api";
+import { fetchPosts, fetchBookmarksApi } from "../services/posts";
+import { getUserAvatar, getUserName } from "../utils/Avatar";
 
 const Home = ({ selectedTopic, onSelectTopic }) => {
-  const [posts, setPosts] = useState(dummyPosts);
+  const [user, setUser] = useState(null)
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Trending");
-  const [sortBy, setSortBy] = useState("Latest");
+  const [sortBy, setSortBy] = useState("latest");
 
-  const currentUser = { 
-    name: "TechSage",
-    avatar:
-      "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80",
-  };
-
-  const loadPosts = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchPosts(activeTab, sortBy, selectedTopic);
-      if (Array.isArray(data) && data.length > 0) {
-        setPosts(data);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try{
+        const res = await api.get("/api/auth/me");
+        const me = res.data?.data || res.data?.user || res.data;
+        console.log("ME:", me);
+        setUser(me);
+      } catch (error) {
+        console.error("Error fetching user:", error);
       }
+    };
+    fetchUser();
+  },[]);
+  const loadPosts = async () => {
+   try {
+      const [data, saved] = await Promise.all([
+        fetchPosts(),
+        fetchBookmarksApi().catch(() => []),
+      ]);
+      const savedIds = new Set(saved.map((p) => p.id));
+      setPosts(
+        data.map((p) => ({
+          ...p,
+          is_bookmarked: p.is_bookmarked ?? savedIds.has(p.id),
+        })),
+      );
     } catch (err) {
-      console.error("Error fetching posts:", err);
+      console.error(
+        "Error fetching posts:",
+        err.response?.status,
+        err.response?.data,
+      );
     } finally {
       setLoading(false);
     }
@@ -35,10 +54,20 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
 
   useEffect(() => {
     loadPosts();
-  }, [activeTab, sortBy, selectedTopic]);
+  }, []);
 
   const handleAddPostSuccess = (createdPost) => {
-    setPosts((prev) => [createdPost, ...prev]);
+    const enriched = {
+      ...createdPost,
+      username: createdPost.username ?? user?.username,
+      full_name: createdPost.full_name ?? (user ? getUserName(user) : undefined),
+      avatar_url: 
+      createdPost.avatar_url ?? (user  ? getUserAvatar(user) : undefined),
+      likes_count: createdPost.likes_count ?? 0,
+      reposts_count: createdPost.reposts_count ?? 0,
+      comments_count: createdPost.comments_count ?? 0,
+    }
+   setPosts((prev) => [enriched, ...prev]);
     if (selectedTopic) onSelectTopic(null);
   };
 
@@ -47,7 +76,6 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
       const cleanTopic = selectedTopic.replace("#", "").toLowerCase();
       const contentMatch = post.content?.toLowerCase().includes(cleanTopic);
       const categoryMatch = post.category?.toLowerCase() === cleanTopic;
-
       return contentMatch || categoryMatch;
     }
     if (activeTab === "Following") {
@@ -60,14 +88,16 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
   });
 
   const sortedPosts = [...filteredPosts].sort((a, b) => {
-    if (sortBy === "Top" || sortBy === "most-liked") {
-      return (b.likes || 0) - (a.likes || 0);
+    if (sortBy === "top" || sortBy === "most-liked") {
+      return (b.likes_count ?? 0) - (a.likes_count ?? 0);
     }
-    if (sortBy === "Latest") {
-      return new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt);
+    if (sortBy === "latest") {
+      return new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt);
     }
     return 0;
   });
+  const myName = user?.full_name || user?.author_name || user?.name || user?.authorName || user?.username || user?.author_username || "Unknown User";
+  const myAvatar = user?.avatar_url || user?.author_avatar_url || user?.avatar || user?.author_avatar || undefined;
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
@@ -88,8 +118,12 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
       {/* Fixed: Updated prop name to onAddPostSuccess to match CreateNewPostCard */}
       <CreateNewPostCard
         onAddPostSuccess={handleAddPostSuccess}
-        userName={currentUser.name}
-        userAvatar={currentUser.avatar}
+         onAvatarChange={(url) =>
+          setUser((u) => ({ ...u, avatar: url, avatar_url: url }))
+        }
+        profile={user || {}}
+        userName={myName}
+        userAvatar={myAvatar}
       />
 
       <FeedFilter
@@ -123,7 +157,7 @@ const Home = ({ selectedTopic, onSelectTopic }) => {
           </div>
         ) : (
           sortedPosts.map((post) => (
-            <PostCard key={post.id || post._id} post={post} />
+            <PostCard key={post.id || post._id} post={post} currentUser={user} />
           ))
         )}
       </div>

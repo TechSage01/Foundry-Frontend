@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import api from "../services/api";
-
+import { fetchBookmarksApi, updatePostApi } from "../services/posts";
 import {
   Share2,
   MoreHorizontal,
@@ -56,6 +56,11 @@ function Profile() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
+  const [drafts, setDrafts] = useState([]);
+  const [draftsLoading, setDraftsLoading] = useState(false);
+  const [bookmarksLoading, setBookmarksLoading] = useState(false);
+  const [publishingId, setPublishingId] = useState(null);
+
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -70,7 +75,7 @@ function Profile() {
     demo_url: "",
     repo_url: "",
     tech_stack: "",
-    category: "AI & ML",
+    category: "AI_ML",
   });
   const [postForm, setPostForm] = useState({
     title: "",
@@ -266,8 +271,20 @@ function Profile() {
       setCreateProjectOpen(false);
       showToast("success", "Project published successfully.");
     } catch (error) {
+      console.error(
+        "create post failed:",
+        error.response?.status,
+        error.response?.data,
+        error,
+      );
+      const d = error.response?.data;
       setCreateError(
-        error.response?.data?.message || "Failed to create project.",
+        d?.message ||
+          (typeof d?.details === "string"
+            ? d.details
+            : d?.details && JSON.stringify(d.details)) ||
+          error.message ||
+          "Failed to create post.",
       );
     } finally {
       setCreating(false);
@@ -285,7 +302,7 @@ function Profile() {
       const data = new FormData();
       data.append("title", postForm.title.trim());
       data.append("content", postForm.content.trim());
-      if (postForm.image) data.append("image", postForm.image);
+      if (postForm.image) data.append("cover_image", postForm.image);
 
       const res = await api.post("/api/posts", data, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -302,42 +319,42 @@ function Profile() {
       setCreating(false);
     }
   };
-  const handleToggleFollow = async () => {
-    const targetUserId = user?.id || user?._id;
-    if (!targetUserId || followLoading) return;
-    const previousState = isFollowing;
-    const previousCount = followersCount;
-    setIsFollowing(!previousState);
-    setFollowersCount((prev) =>
-      previousState ? Math.max(0, prev - 1) : prev + 1,
-    );
-    setFollowLoading(true);
-    try {
-      if (previousState) {
-        await api.delete(`/api/users/${targetUserId}/follow`);
-        showToast("success", `You Unfollowed @${user.username || "user"}.`);
-      } else {
-        await api.post(`/api/users/${targetUserId}/follow`);
-        showToast(
-          "success",
-          `Following @${user.username || "user"} successfully.`,
-        );
-      }
-    } catch (error) {
-      console.error("Error toggling follow:", error);
-      setIsFollowing(previousState);
-      setFollowersCount(previousCount);
-      const errorMsg =
-        error.response?.data?.message || "Failed to update follow status";
-      showToast("error", errorMsg);
-    } finally {
-      setFollowLoading(false);
-    }
-  };
+  // const handleToggleFollow = async () => {
+  //   const targetUsername = user.username
+  //   if (!targetUsername || followLoading) return;
+  //   const previousState = isFollowing;
+  //   const previousCount = followersCount;
+  //   setIsFollowing(!previousState);
+  //   setFollowersCount((prev) =>
+  //     previousState ? Math.max(0, prev - 1) : prev + 1,
+  //   );
+  //   setFollowLoading(true);
+  //   try {
+  //     if (previousState) {
+  //       await api.delete(`/api/users/${targetUsername}/follow`);
+  //       showToast("success", `You Unfollowed @${user.username || "user"}.`);
+  //     } else {
+  //       await api.post(`/api/users/${targetUsername}/follow`);
+  //       showToast(
+  //         "success",
+  //         `Following @${user.username || "user"} successfully.`,
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error("Error toggling follow:", error);
+  //     setIsFollowing(previousState);
+  //     setFollowersCount(previousCount);
+  //     const errorMsg =
+  //       error.response?.data?.message || "Failed to update follow status";
+  //     showToast("error", errorMsg);
+  //   } finally {
+  //     setFollowLoading(false);
+  //   }
+  // };
 
   const fetchFollowList = async (type) => {
     const username = user?.username || user?.userName || user?.user_name;
-    console.log("PROFILE ME:", userData, "username used:", username);
+    // console.log("PROFILE ME:", userData, "username used:", username);
 
     if (!username) return;
     setFollowModal((prev) => ({
@@ -430,7 +447,12 @@ function Profile() {
           userData.avatar ||
           userData.profilePicture;
 
-        const userCover = userData.cover_url || userData.cover;
+        const userCover =
+          userData.cover_image ||
+          userData.cover_image_url ||
+          userData.cover_url ||
+          userData.cover ||
+          userData.coverUrl;
 
         setUser({
           ...userData,
@@ -443,33 +465,62 @@ function Profile() {
           cover: userCover,
         });
         setFollowersCount(
-          userData.followersCount ?? userData.followers?.length ?? 0,
+          userData.followers_count ??
+            userData.followersCount ??
+            userData.followers?.length ??
+            0,
         );
         setFollowingCount(
-          userData.followingCount ?? userData.following?.length ?? 0,
+          userData.following_count ??
+            userData.followingCount ??
+            userData.following?.length ??
+            0,
         );
-        setIsFollowing(Boolean(userData.isFollowing));
+        setIsFollowing(
+          Boolean(
+            userData.isFollowing ??
+            userData.is_following ??
+            userData.followed_by_me,
+          ),
+        );
         const username = userData.username;
 
         if (username) {
           fetchUserPosts();
+          fetchUserDrafts();
+          fetchUserBookmarks();
+          const lengthOf = (res) => {
+            const raw = res.data?.data ?? res.data;
+            if (Array.isArray(raw)) return raw.length;
+            return (
+              raw?.followers ||
+              raw?.following ||
+              raw?.users ||
+              raw?.items ||
+              []
+            ).length;
+          };
+          api
+            .get(`/api/users/${username}/followers`)
+            .then((r) => setFollowersCount(lengthOf(r)))
+            .catch(() => {});
+          api
+            .get(`/api/users/${username}/following`)
+            .then((r) => setFollowingCount(lengthOf(r)))
+            .catch(() => {});
           try {
-            const expRes = await api.get(`/api/experiences/user/${username}`);
-            const rawData =
-              expRes.data?.data || expRes.data?.experiences || expRes.data;
-            let fetchedTimeline = [];
-            if (Array.isArray(rawData)) {
-              fetchedTimeline = rawData;
-            } else if (rawData && typeof rawData === "object") {
-              fetchedTimeline = [rawData];
-            }
-
-            if (fetchedTimeline.length > 0) {
+              const expRes = await api.get(`/api/experiences/user/${username}`);
+              const fetchedTimeline = [
+                ...toArray(expRes.data, "experiences", "items", "results", "rows"),
+              ].sort(
+                (a, b) =>
+                  new Date(b.start_date || 0) - new Date(a.start_date || 0) ||
+                  new Date(b.created_at || 0) - new Date(a.created_at || 0),
+              );
+              console.log("EXPERIENCES RESPONSE:", expRes.data, "->", fetchedTimeline);
               setTimeline(fetchedTimeline);
               setExperienceForm(fetchedTimeline);
-            }
-          } catch (expErr) {
-            console.error("Failed to fetch user experiences:", expErr);
+            } catch (expErr) {
 
             const embeddedTimeline =
               userData.timeline || userData.experience || userData.experiences;
@@ -526,6 +577,35 @@ function Profile() {
   useEffect(() => {
     fetchUserProfile();
   }, []);
+  useEffect(()=> {
+    const username = user?.username || user?.userName || user?.user_name;
+    if(!username) return;
+    let cancelled = false;
+    const loadExperiences = async () => {
+      try{
+        const res = await api.get(`/api/experiences/user/${username}`);
+        const list = [
+          ...toArray(res.data, "experiences", "items", "results", "rows")
+        ].sort(
+          (a, b) => 
+            new Date(b.start_date || 0) - new Date(a.start_date || 0) ||
+            new Date(b.created_at || 0) - new Date(a.created_at || 0)
+        );
+        console.log("EXPERIENCES RESPONSE:", res.data, "->", list.length, list);
+        if(!cancelled) {
+          setTimeline(list);
+          setExperienceForm(list);
+        }
+      }catch(err) {
+        console.error("Failed to fetch experiences:", err.response?.status, err.response?.data || err);
+        if(attempt < 2 && !cancelled) {
+          setTimeout(()=> loadExperiences(attempt + 1), 1500);
+        }
+      }
+    };
+    loadExperiences();
+    return () => { cancelled = true; };
+  }, [user?.username, user?.userName, user?.user_name]);
   // LIKES
   useEffect(() => {
     const projectLikes = userProjects.reduce(
@@ -542,7 +622,7 @@ function Profile() {
   const fetchUserPosts = async () => {
     try {
       setPostsLoading(true);
-      const res = await api.get(`/api/posts/me`); 
+      const res = await api.get(`/api/posts/me`);
       const fetched = res.data?.data || res.data?.posts || res.data;
       setPosts(toArray(res.data, "posts", "items", "results", "rows"));
       if (Array.isArray(fetched)) setPosts(fetched);
@@ -550,6 +630,42 @@ function Profile() {
       console.error("Failed to fetch user posts:", error);
     } finally {
       setPostsLoading(false);
+    }
+  };
+  const fetchUserDrafts = async () => {
+    try {
+      setDraftsLoading(true);
+      const res = await api.get("/api/posts/me/drafts");
+      setDrafts(toArray(res.data, "posts", "items", "results", "rows"));
+    } catch (error) {
+      if (error.response?.status === 404)
+        setDrafts([]); // 404 = no drafts yet
+      else console.error("Failed to fetch drafts:", error);
+    } finally {
+      setDraftsLoading(false);
+    }
+  };
+  const handlePublishDraft = async (draft) => {
+    const id = draft.id || draft._id;
+    if (!id || publishingId) return;
+    setPublishingId(id);
+    try {
+      const fd = new FormData();
+      fd.append("is_published", true);
+      const updated = await updatePostApi(id, fd);
+      setDrafts((prev) => prev.filter((d) => (d.id || d._id) !== id));
+      setPosts((prev) => [
+        { ...draft, ...updated, is_published: true },
+        ...prev,
+      ]);
+      showToast("success", "Draft published successfully.");
+    } catch (err) {
+      showToast(
+        "error",
+        err.response?.data?.message || "Failed to publish draft.",
+      );
+    } finally {
+      setPublishingId(null);
     }
   };
   const handleChange = (e) => {
@@ -678,10 +794,16 @@ function Profile() {
           updated?.cover_url ||
           updated?.cover ||
           updated?.coverUrl ||
-          updated?.cover_image_url;
-        preview;
+          updated?.cover_image_url ||
+          updated?.cover_image ||
+          preview;
         setCoverPreview(newUrl);
-        setUser((prev) => ({ ...prev, cover: newUrl, cover_url: newUrl }));
+        setUser((prev) => ({
+          ...prev,
+          cover: newUrl,
+          cover_image: newUrl,
+          cover_url: newUrl,
+        }));
         setCoverFile(null);
       }
       if (newUrl !== preview) URL.revokeObjectURL(preview);
@@ -798,11 +920,16 @@ function Profile() {
       // );
 
       // 2. Save remaining profile details
-      const data = new FormData();
-      data.append("username", formData.username || "");
-      data.append("headline", formData.bio || "");
-      data.append("bio", formData.about || "");
-      data.append("location", formData.location || "");
+     const data = new FormData();
+const put = (key, value) => {
+  const v = String(value ?? "").trim();
+  if (v) data.append(key, v);
+};
+put("username", formData.username);
+put("full_name", formData.name);
+put("headline", formData.bio);
+put("bio", formData.about);
+put("location", formData.location);
 
       const skillsArray =
         typeof formData.skills === "string"
@@ -889,6 +1016,14 @@ function Profile() {
   const handleOpenEdit = () => {
     setHasError(false);
     setStatusMessage({ type: "", text: "" });
+    setFormData({
+      name: user?.name || user?.full_name || "",
+      username: user?.username || "",
+      bio: user?.bio || "",
+      about: user?.about || "",
+      location: user?.location || "",
+      skills: Array.isArray(user?.skills) ? user.skills.join(", ") : "",
+    });
     setIsEditOpen(true);
     setExperienceForm(
       timeline.map((item) => ({
@@ -1255,6 +1390,7 @@ function Profile() {
                     count: userProjects.length,
                   },
                   { key: "posts", label: "Posts", count: posts.length },
+                  { key: "drafts", label: "Drafts", count: drafts.length },
                   { key: "reposts", label: "Reposts", count: reposts.length },
                   { key: "likes", label: "Likes", count: likedItems.length },
                   {
@@ -1354,6 +1490,80 @@ function Profile() {
                       No posts yet. Click "Create" to write one.
                     </p>
                   ))}
+                {activeTab === "drafts" &&
+                  (draftsLoading ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#A04622]" />
+                    </div>
+                  ) : drafts.length > 0 ? (
+                    <div className="space-y-3">
+                      {drafts.map((draft, index) => {
+                        const id = draft.id || draft._id || index;
+                        return (
+                          <article
+                            key={id}
+                            className="p-4 border border-stone-100 rounded-xl hover:border-stone-300 transition flex items-start justify-between gap-3"
+                          >
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-stone-900 text-sm">
+                                {draft.title || "Untitled draft"}
+                              </h3>
+                              <p className="text-xs text-stone-500 line-clamp-3 mt-1">
+                                {draft.content || draft.subtitle}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handlePublishDraft(draft)}
+                              disabled={
+                                publishingId === (draft.id || draft._id)
+                              }
+                              className="shrink-0 px-3 py-1.5 bg-[#A04622] hover:bg-[#85381a] text-white text-xs font-semibold rounded-lg transition active:scale-95 disabled:opacity-60 cursor-pointer"
+                            >
+                              {publishingId === (draft.id || draft._id)
+                                ? "Publishing…"
+                                : "Publish"}
+                            </button>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-stone-400 text-center py-10">
+                      No drafts yet.
+                    </p>
+                  ))}
+
+                {activeTab === "bookmarks" &&
+                  (bookmarksLoading ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#A04622]" />
+                    </div>
+                  ) : bookmarks.length > 0 ? (
+                    <div className="space-y-3">
+                      {bookmarks.map((post, index) => (
+                        <article
+                          key={post.id || post._id || index}
+                          className="p-4 border border-stone-100 rounded-xl hover:border-stone-300 transition"
+                        >
+                          <p className="text-xs text-stone-400 mb-1">
+                            {post.username ? `@${post.username}` : ""}
+                          </p>
+                          <h3 className="font-semibold text-stone-900 text-sm">
+                            {post.title}
+                          </h3>
+                          <p className="text-xs text-stone-500 line-clamp-3 mt-1">
+                            {post.content || post.subtitle}
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-stone-400 text-center py-10">
+                      No bookmarks yet. Save a post from the feed to see it
+                      here.
+                    </p>
+                  ))}
 
                 {activeTab === "reposts" && (
                   <p className="text-sm text-stone-400 text-center py-10">
@@ -1367,12 +1577,12 @@ function Profile() {
                     once the likes API is ready.
                   </p>
                 )}
-                {activeTab === "bookmarks" && (
+                {/* {activeTab === "bookmarks" && (
                   <p className="text-sm text-stone-400 text-center py-10">
                     Bookmarks aren't available yet — this tab will populate once
                     the bookmarks API is ready.
                   </p>
-                )}
+                )} */}
               </div>
             </section>
 

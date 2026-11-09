@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Check,
   ChevronDown,
@@ -16,14 +16,14 @@ import {
 } from "lucide-react";
 import MainLayout from "../components/layout/MainLayout";
 import "./CreateCommunity.css";
+import { createCommunityApi } from "../services/communities";
 
 const domains = [
-  "Systems Programming",
-  "Distributed Systems",
-  "AI / ML Infra",
-  "Compilers & Languages",
-  "Cryptography & Zero-Knowledge",
-  "Robotics & Hardware",
+  { label: "Systems Programming", value: "systems" },
+  { label: "Software Engineering", value: "web-dev" },
+  { label: "Distributed Systems", value: "distributed-systems" },
+  { label: "AI / ML Infra", value: "ai" },
+  { label: "Robotics & Hardware", value: "robotics" },
 ];
 
 const membershipOptions = [
@@ -45,12 +45,13 @@ const membershipOptions = [
 ];
 
 function CreateCommunity() {
+  const navigate = useNavigate()
   const [communityName, setCommunityName] = useState("");
   const [slug, setSlug] = useState("");
   const [tagline, setTagline] = useState("");
   const [selectedDomain, setSelectedDomain] = useState("");
-  const [techStack, setTechStack] = useState([]);
-  const [techInput, setTechInput] = useState("");
+  // const [techStack, setTechStack] = useState([]);
+  // const [techInput, setTechInput] = useState("");
   const [membershipType, setMembershipType] = useState("Open Guild");
   const [githubProof, setGithubProof] = useState(false);
   const [repositoryContribution, setRepositoryContribution] = useState(false);
@@ -61,37 +62,43 @@ function CreateCommunity() {
   const [liveSync, setLiveSync] = useState("");
   const [githubLink, setGithubLink] = useState("");
   const [communityLink, setCommunityLink] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [submitError, setSubmitError] = useState("");
 
-  const addTechToken = () => {
-    const token = techInput.trim();
+  // const addTechToken = () => {
+  //   const token = techInput.trim();
 
-    if (!token) return;
+  //   if (!token) return;
 
-    if (!techStack.includes(token)) {
-      setTechStack((current) => [...current, token]);
-    }
+  //   if (!techStack.includes(token)) {
+  //     setTechStack((current) => [...current, token]);
+  //   }
 
-    setTechInput("");
-  };
+  //   setTechInput("");
+  // };
 
-  const removeTechToken = (tokenToRemove) => {
-    setTechStack((current) =>
-      current.filter((token) => token !== tokenToRemove),
-    );
-  };
+  // const removeTechToken = (tokenToRemove) => {
+  //   setTechStack((current) =>
+  //     current.filter((token) => token !== tokenToRemove),
+  //   );
+  // };
 
-  const handleTechKeyDown = (event) => {
-    if (event.key === "Enter" || event.key === ",") {
-      event.preventDefault();
-      addTechToken();
-    }
+  // const handleTechKeyDown = (event) => {
+  //   if (event.key === "Enter" || event.key === ",") {
+  //     event.preventDefault();
+  //     addTechToken();
+  //   }
 
-    if (event.key === "Backspace" && techInput === "" && techStack.length > 0) {
-      removeTechToken(techStack[techStack.length - 1]);
-    }
-  };
+  //   if (event.key === "Backspace" && techInput === "" && techStack.length > 0) {
+  //     removeTechToken(techStack[techStack.length - 1]);
+  //   }
+  // };
 
   const previewName = communityName.trim() || "Your Community Name";
+
+  const previewTagLine = 
+  tagline.trim() || "Your community mission will appear here";
 
   const previewSlug = slug.trim() || "your-community";
 
@@ -100,118 +107,53 @@ function CreateCommunity() {
 
   const previewMembership = membershipType || "Open Guild";
 
-  const readinessItems = useMemo(
-    () => [
-      {
-        label: "Community identity defined",
-        complete: communityName.trim() !== "" && tagline.trim() !== "",
-      },
-      {
-        label: "Technical domain selected",
-        complete: selectedDomain !== "",
-      },
-      {
-        label: "Membership governance configured",
-        complete: membershipType !== "",
-      },
-      {
-        label: "Technical stack added",
-        complete: techStack.length > 0,
-      },
-      {
-        label: "Chapter written",
-        complete: charter.trim().length > 20,
-      },
-      {
-        label: "Sync channel configured",
-        complete: githubLink.trim() !== "" || communityLink.trim() !== "",
-      },
-    ],
-    [
-      communityName,
-      tagline,
-      selectedDomain,
-      membershipType,
-      techStack,
-      charter,
-      githubLink,
-      communityLink,
-    ],
-  );
-
+  const readinessItems = [
+    { label: "Community name added", complete: communityName.trim() !== ""},
+    { label: "Tagline written", complete: tagline.trim() !== ""},
+    { label: "Category Selected", complete: selectedDomain !== ""},
+  ];
   const completedReadiness = readinessItems.filter(
-    (item) => item.complete,
-  ).length;
+    (i) => i.complete).length;
 
   const readinessPercentage = Math.round(
     (completedReadiness / readinessItems.length) * 100,
   );
 
-  const handleLaunch = (event) => {
+  const handleLaunch = async (event) => {
     event.preventDefault();
-
-    const communityData = {
-      name: communityName,
-      slug,
-      tagline,
-      domain: selectedDomain,
-      techStack,
-      membershipType,
-      verification: {
-        githubProof,
-        repositoryContribution,
-        foundrySignal,
-      },
-      charter,
-      discussionTopics,
-      liveSync,
-      githubLink,
-      communityLink,
-    };
-
-    console.log("Launch community:", communityData);
+    if(submitting) return;
+    if(!communityName.trim() || !tagline.trim() || !selectedDomain) {
+      setSubmitError("Community name, tagline and category are required.");
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError("");
+    try{
+      const created = await createCommunityApi({
+        title: communityName.trim(),
+        description: tagline.trim(),
+        category: selectedDomain,
+      });
+       const newSlug = created?.slug || created?.data?.slug;
+      if (newSlug) navigate(`/communities/${newSlug}`);
+      else navigate("/communities");
+    } catch(err) {
+      console.error("Failed to create community:", err);
+      setSubmitError(
+        err.response?.data?.message ||
+        "Failed to create community. Please try again.",
+      )
+    } finally {
+      setSubmitting(false);
+    }
+    // console.log("Launch community:", communityData);
   };
-
-  const handleSaveDraft = () => {
-    const draftData = {
-      name: communityName,
-      slug,
-      tagline,
-      domain: selectedDomain,
-      techStack,
-      membershipType,
-      verification: {
-        githubProof,
-        repositoryContribution,
-        foundrySignal,
-      },
-      charter,
-      discussionTopics,
-      liveSync,
-      githubLink,
-      communityLink,
-    };
-
-    console.log("Save draft:", draftData);
-  };
-
   const handleDiscard = () => {
     setCommunityName("");
-    setSlug("");
+    // setSlug("");
     setTagline("");
     setSelectedDomain("");
-    setTechStack([]);
-    setTechInput("");
-    setMembershipType("Open Guild");
-    setGithubProof(false);
-    setRepositoryContribution(false);
-    setFoundrySignal(false);
-    setCharter("");
-    setDiscussionTopics("");
-    setLiveSync("");
-    setGithubLink("");
-    setCommunityLink("");
-    setCharterMode("write");
+    setSubmitError("");
   };
 
   return (
@@ -224,9 +166,6 @@ function CreateCommunity() {
           </div>
 
           <div className="create-community-save-status">
-            <span className="autosave-dot" />
-            <span>Draft autosaved 1m ago</span>
-
             <button
               type="button"
               className="discard-button"
@@ -285,7 +224,7 @@ function CreateCommunity() {
                 />
               </div>
 
-              <div className="form-field">
+              {/* <div className="form-field">
                 <label htmlFor="community-slug">Slug Handle</label>
 
                 <div className="slug-input-wrapper">
@@ -311,7 +250,7 @@ function CreateCommunity() {
                     </span>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               <div className="form-field">
                 <div className="field-label-row">
@@ -334,369 +273,32 @@ function CreateCommunity() {
               </div>
 
               <div className="form-field">
-                <label>Technical Domain</label>
+                <label>Category</label>
 
                 <div className="domain-options">
                   {domains.map((domain) => (
                     <button
-                      key={domain}
+                      key={domain.value}
                       type="button"
                       className={`domain-option ${
-                        selectedDomain === domain ? "selected" : ""
+                        selectedDomain === domain.value ? "selected" : ""
                       }`}
-                      onClick={() => setSelectedDomain(domain)}
+                      onClick={() => setSelectedDomain(domain.value)}
                     >
-                      {domain}
+                      {domain.label}
                     </button>
                   ))}
                 </div>
               </div>
-
-              <div className="form-field">
-                <label>Primary Tech Stack &amp; Primitives</label>
-
-                <div className="tech-input-wrapper">
-                  <div className="tech-tokens">
-                    {techStack.map((token) => (
-                      <span className="tech-token" key={token}>
-                        {token}
-
-                        <button
-                          type="button"
-                          aria-label={`Remove ${token}`}
-                          onClick={() => removeTechToken(token)}
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
-                    ))}
-
-                    <input
-                      type="text"
-                      value={techInput}
-                      onChange={(event) => setTechInput(event.target.value)}
-                      onKeyDown={handleTechKeyDown}
-                      placeholder={
-                        techStack.length === 0
-                          ? "Add technology or primitive..."
-                          : "Add another..."
-                      }
-                    />
-                  </div>
-                </div>
-
-                <span className="field-hint">
-                  Press Enter or comma to insert technical tokens.
-                </span>
-              </div>
             </section>
-
-            <section className="community-form-section">
-              <div className="form-section-heading">
-                <div>
-                  <div className="section-title-row">
-                    <h2>Structure &amp; Membership Governance</h2>
-
-                    <span className="section-badge signal">High Signal</span>
-                  </div>
-
-                  <p>
-                    Define how builders join and how participation is governed.
-                  </p>
-                </div>
-              </div>
-
-              <div className="membership-options">
-                {membershipOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    className={`membership-option ${
-                      membershipType === option.id ? "selected" : ""
-                    }`}
-                    onClick={() => setMembershipType(option.id)}
-                  >
-                    <div className="membership-option-radio">
-                      <span />
-                    </div>
-
-                    <div className="membership-option-content">
-                      <strong>{option.title}</strong>
-
-                      <span>{option.description}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="verification-section">
-                <div className="verification-heading">
-                  <div>
-                    <h3>Builder Verification Criteria</h3>
-
-                    <p>Require meaningful technical signals before joining.</p>
-                  </div>
-
-                  <ShieldCheck size={19} />
-                </div>
-
-                <div className="verification-list">
-                  <label className="verification-item">
-                    <div>
-                      <strong>Require GitHub Cryptographic Proof</strong>
-
-                      <span>
-                        Verify ownership of the builder's GitHub account.
-                      </span>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      checked={githubProof}
-                      onChange={(event) => setGithubProof(event.target.checked)}
-                    />
-                  </label>
-
-                  <label className="verification-item">
-                    <div>
-                      <strong>Production Repository Contribution</strong>
-
-                      <span>
-                        Require evidence of contribution to a production
-                        repository.
-                      </span>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      checked={repositoryContribution}
-                      onChange={(event) =>
-                        setRepositoryContribution(event.target.checked)
-                      }
-                    />
-                  </label>
-
-                  <label className="verification-item">
-                    <div>
-                      <strong>Foundry Network Signal ≥ 400</strong>
-
-                      <span>
-                        Require a minimum verified network reputation.
-                      </span>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      checked={foundrySignal}
-                      onChange={(event) =>
-                        setFoundrySignal(event.target.checked)
-                      }
-                    />
-                  </label>
-                </div>
-              </div>
-            </section>
-
-            <section className="community-form-section">
-              <div className="form-section-heading">
-                <div>
-                  <div className="section-title-row">
-                    <h2>Charter &amp; Working Principles</h2>
-                  </div>
-
-                  <p>Establish the principles and expectations for members.</p>
-                </div>
-
-                <div className="editor-mode-toggle">
-                  <button
-                    type="button"
-                    className={charterMode === "write" ? "active" : ""}
-                    onClick={() => setCharterMode("write")}
-                  >
-                    Write
-                  </button>
-
-                  <button
-                    type="button"
-                    className={charterMode === "preview" ? "active" : ""}
-                    onClick={() => setCharterMode("preview")}
-                  >
-                    <Eye size={14} />
-                    Preview
-                  </button>
-                </div>
-              </div>
-
-              {charterMode === "write" ? (
-                <div className="charter-editor">
-                  <div className="editor-toolbar">
-                    <button type="button">H1</button>
-
-                    <button type="button">H2</button>
-
-                    <button type="button">
-                      <strong>B</strong>
-                    </button>
-
-                    <button type="button">
-                      <em>I</em>
-                    </button>
-
-                    <button type="button">``</button>
-
-                    <span />
-
-                    <button type="button">•</button>
-
-                    <button type="button">1.</button>
-
-                    <button type="button">
-                      <LinkIcon size={14} />
-                    </button>
-                  </div>
-
-                  <textarea
-                    name="charter"
-                    value={charter}
-                    onChange={(event) => setCharter(event.target.value)}
-                    placeholder={`## Mission
-
-Describe what this community exists to build, explore, or discuss.
-
-## Working Principles
-
-- What should members contribute?
-
-- How should members collaborate?
-
-- What makes this community high-signal?`}
-                    rows={13}
-                  />
-                </div>
-              ) : (
-                <div className="charter-preview">
-                  {charter.trim() ? (
-                    charter
-                      .split("\n")
-                      .map((line, index) => (
-                        <p key={index}>{line || "\u00a0"}</p>
-                      ))
-                  ) : (
-                    <p className="empty-preview">
-                      Your charter preview will appear here as you write.
-                    </p>
-                  )}
-                </div>
-              )}
-            </section>
-
-            <section className="community-form-section">
-              <div className="form-section-heading">
-                <div>
-                  <div className="section-title-row">
-                    <h2>Sync Cadence &amp; Channels</h2>
-
-                    <span className="section-badge-optional">Optional</span>
-                  </div>
-
-                  <p>
-                    Give members clear places and rhythms for collaboration.
-                  </p>
-                </div>
-              </div>
-
-              <div className="sync-fields">
-                <div className="form-field">
-                  <label htmlFor="discussion-topics">
-                    Default Discussion Topics
-                  </label>
-
-                  <input
-                    id="discussion-topics"
-                    name="discussionTopics"
-                    type="text"
-                    value={discussionTopics}
-                    onChange={(event) =>
-                      setDiscussionTopics(event.target.value)
-                    }
-                    placeholder="e.g. architecture, tooling, research"
-                  />
-                </div>
-
-                <div className="form-field">
-                  <label htmlFor="live-sync">Live Architecture Sync</label>
-
-                  <div className="select-wrapper">
-                    <select
-                      name="liveSync"
-                      id="live-sync"
-                      value={liveSync}
-                      onChange={(event) => setLiveSync(event.target.value)}
-                    >
-                      <option value="">Select cadence</option>
-                      <option value="Weekly">Weekly</option>
-                      <option value="Bi-weekly">Bi-weekly</option>
-                      <option value="Monthly">Monthly</option>
-                      <option value="No fixed cadence">No fixed cadence</option>
-                    </select>
-
-                    <ChevronDown size={16} />
-                  </div>
-                </div>
-
-                <div className="form-field">
-                  <label htmlFor="github-link">
-                    Github Organization / Repo
-                  </label>
-
-                  <div className="input-with-icon">
-                    <LinkIcon size={16} />
-
-                    <input
-                      id="github-link"
-                      name="githubLink"
-                      type="url"
-                      value={githubLink}
-                      onChange={(event) => setGithubLink(event.target.value)}
-                      placeholder="https://github.com/..."
-                    />
-                  </div>
-                </div>
-
-                <div className="form-field">
-                  <label htmlFor="community-link">
-                    Matrix Room / Discord Link
-                  </label>
-
-                  <div className="input-with-icon">
-                    <LinkIcon size={16} />
-
-                    <input
-                      id="community-link"
-                      name="communityLink"
-                      type="url"
-                      value={communityLink}
-                      onChange={(event) => setCommunityLink(event.target.value)}
-                      placeholder="https://discord.gg/..."
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
+            {submitError && (
+              <div className="create-community-error">{submitError}</div>
+            )}
 
             <div className="create-community-form-actions">
-              <button
-                type="button"
-                className="save-draft-button"
-                onClick={handleSaveDraft}
-              >
-                <Save size={16} />
-                Save Pod Draft
-              </button>
-
-              <button type="submit" className="launch-community-button">
+              <button type="submit" className="launch-community-button" disabled={submitting}>
                 <Send size={16} />
-                Found Community &amp; Launch Pod
+                {submitting ? "Launching..." : "Found Community & Launch Pod"}
               </button>
             </div>
           </main>
@@ -725,36 +327,15 @@ Describe what this community exists to build, explore, or discuss.
                   <Sparkles size={22} />
                 </div>
 
-                <div className="preview-main">
+               <div className="preview-main">
                   <div className="preview-title-row">
                     <h3>{previewName}</h3>
-
-                    <span>{previewMembership}</span>
                   </div>
-
                   <p>{previewTagline}</p>
-
-                  <div className="preview-slug">
-                    foundry.network/c/ {previewSlug}
-                  </div>
-
-                  {techStack.length > 0 && (
-                    <div className="preview-tags">
-                      {techStack.slice(0, 5).map((token) => (
-                        <span key={token}>{token}</span>
-                      ))}
-                    </div>
-                  )}
-
                   <div className="preview-footer">
                     <span>
                       <Users size={14} />0 members
                     </span>
-
-                    <button type="button">
-                      Request to Join Pod
-                      <ArrowUpRight size={14} />
-                    </button>
                   </div>
                 </div>
               </div>
@@ -811,22 +392,22 @@ Describe what this community exists to build, explore, or discuss.
                 </p>
               </div>
 
-              <button type="submit" className="launch-primary-button">
+             <button type="submit" className="launch-primary-button" disabled={submitting}>
                 <Sparkles size={16} />
-                Found Community &amp; Launch Pod
+                {submitting ? "Launching..." : "Found Community & Launch Pod"}
               </button>
 
-              <button
+              {/* <button
                 type="button"
                 className="launch-secondary-button"
                 onClick={handleSaveDraft}
               >
                 <Save size={16} />
                 Save Pod Draft
-              </button>
+              </button> */}
             </section>
 
-            <section className="community-side-card architect-card">
+            {/* <section className="community-side-card architect-card">
               <span className="side-card-eyebrow">ARCHITECT LEAD</span>
 
               <div className="architect-profile">
@@ -856,7 +437,7 @@ Describe what this community exists to build, explore, or discuss.
                   Community Lead
                 </span>
               </div>
-            </section>
+            </section> */}
           </aside>
         </form>
       </div>

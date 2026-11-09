@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Video,
   Image,
@@ -9,14 +9,76 @@ import {
   PenSquare,
   Newspaper,
   AlertCircle,
+  Camera,
 } from "lucide-react";
-import { createPostApi } from "../../services/posts";
+import { createPostApi, uploadAvatarApi } from "../../services/posts";
+
+const isUsableAvatar = (url) =>
+  typeof url === "string" &&
+  url.trim() !== "" &&
+  !url.includes("via.placeholder.com") &&
+  // !url.includes("foundry_logo") &&   d
+  url !== "https://google.com" &&
+  (url.startsWith("http") || url.startsWith("blob:"));
+  
 
 const CreateNewPostCard = ({
   onAddPostSuccess,
+  onAvatarChange,
+  profile,
   userAvatar,
-  userName = "TechSage",
+  userName = "User",
 }) => {
+  const avatarInputRef = useRef(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const [ avatarSuccess, setAvatarSuccess] = useState("");
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=A04622&color=fff`;
+  const avatarSrc =
+    avatarFailed || !isUsableAvatar(userAvatar) ? fallbackAvatar : userAvatar;
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [userAvatar]);
+  console.log("AVATAR BOX", { userAvatar, avatarFailed, avatarSrc });
+
+  const handleAvatarSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Please choose an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage("Image is too large. Max size is 5MB");
+      return;
+    }
+    setAvatarUploading(true);
+    try {
+      const newUrl = await uploadAvatarApi(file, profile);
+      if (onAvatarChange) onAvatarChange(newUrl || URL.createObjectURL(file));
+      setErrorMessage("");
+    } catch (error) {
+      console.error("Avatar upload failed:", error);
+      console.error("message:", error?.message, "| code:", error?.code);
+       setErrorMessage(
+        error.response?.data?.message || "Could not update your profile picture.",
+      );
+      console.error(
+        "Avatar upload failed:",
+        error.response?.status,
+        error.response?.data,
+      );
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Could not update your profile picture.",
+      );
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [content, setContent] = useState("");
   const [selectedMedia, setSelectedMedia] = useState(null);
@@ -82,7 +144,12 @@ const CreateNewPostCard = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (isSubmitting) return;
+    const placeholder =
+      selectedMedia?.type === "video" ? "Video update" : "Photo update";
+    const body = content.trim() || (selectedMedia ? placeholder : "");
+    // const title = isArticleMode ? articleTitle.trim() : body.slice(0, 80);
     const title = isArticleMode
       ? articleTitle.trim()
       : content.trim().slice(0, 80);
@@ -99,7 +166,7 @@ const CreateNewPostCard = ({
     try {
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("content", content.trim());
+      formData.append("content", body);
       formData.append("is_published", true);
       if (selectedCategory && selectedCategory !== "Trending") {
         formData.append("tags", selectedCategory);
@@ -122,9 +189,10 @@ const CreateNewPostCard = ({
       setErrorMessage("");
     } catch (error) {
       console.error("Post creation failed:", error.response?.data || error);
-  setErrorMessage(
-    error.response?.data?.message || "Failed to post update. Please try again.",
-  );
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Failed to post update. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -136,10 +204,33 @@ const CreateNewPostCard = ({
   return (
     <div className="bg-white p-4 rounded-2xl  border border-stone-200/80 shadow-sm space-y-3 font-sans">
       <div className="flex items-center gap-3">
-        <img
-          src={userAvatar && userAvatar.trim()}
-          alt={userName}
-          className="w-10 h-10 rounded-full object-cover border border-stone-200/80 bg-[#F7F4F0] shrink-0"
+        <button
+          type="button"
+          onClick={() => avatarInputRef.current?.click()}
+          disabled={avatarUploading}
+          title="Change profile picture"
+          className="relative group w-10 h-10 rounded-full shrink-0 cursor-pointer"
+        >
+          <img
+            src={avatarSrc}
+            alt={userName}
+            onError={() => setAvatarFailed(true)}
+            className="w-10 h-10 rounded-full object-cover border border-stone-200/80 bg-[#F7F4F0]"
+          />
+          <span className="absolute inset-0 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {avatarUploading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Camera size={14} />
+            )}
+          </span>
+        </button>
+        <input
+          type="file"
+          accept="image/*"
+          ref={avatarInputRef}
+          onChange={handleAvatarSelect}
+          className="hidden"
         />
 
         <div className="flex-1 flex flex-col min-w-0 items-center bg-[#F7F4F0] px-4 py-2.5 rounded-2xl border border-stone-200/50 focus-within:border-[#A8431D] transition-colors">
