@@ -31,7 +31,7 @@ export const createPostApi = async (formData) => {
   // return res.json();
 };
 export const updatePostApi = async (id, postData) => {
-  const res = await api.put(`/api/posts/${id}`, formData, {
+  const res = await api.patch(`/api/posts/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data?.data || res.data?.post || res.data;
@@ -103,7 +103,7 @@ export const uploadAvatarApi = async (file, user) => {
   formData.append("skills", JSON.stringify(Array.isArray(skills) ? skills : []));
   formData.append("avatar", file);
 
-  const res = await api.put("/api/profile", formData, {
+  const res = await api.patch("/api/profile", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   const data = res.data?.data || res.data?.user || res.data;

@@ -2,7 +2,7 @@ import api from './api';
 
 // --- PROFILE ---
 export const updateProfile = async (profileData) => {
-  const response = await api.put('/api/profile', profileData);
+  const response = await api.patch('/api/profile', profileData);
   return response.data;
 };
 
@@ -31,9 +31,9 @@ export const getUserProjects = async (username) => {
   return response.data;
 };
 
-// PUT /api/projects/{id}
+// PATCH /api/projects/{id}
 export const updateProject = async (id, projectData) => {
-  const response = await api.put(`/api/projects/${id}`, projectData);
+  const response = await api.patch(`/api/projects/${id}`, projectData);
   return response.data;
 };
 

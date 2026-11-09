@@ -200,7 +200,7 @@ export const ProjectComponents = ({
     setLoading(true);
     try {
       if (api) {
-        const response = await api.put(`/api/projects/${projectId}`, editForm);
+        const response = await api.patch(`/api/projects/${projectId}`, editForm);
         setProject(response.data?.project || { ...project, ...editForm });
       } else {
         setProject({ ...project, ...editForm });

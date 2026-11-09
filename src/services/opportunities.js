@@ -65,7 +65,7 @@ export const createOpportunityApi = async (form) => {
 }
 
 export const updateOpportunityApi = async (id, payload) => {
-  const res = await api.put(`/api/opportunities/${id}`, payload);
+  const res = await api.patch(`/api/opportunities/${id}`, payload);
   return res.data?.data || res.data?.opportunity || res.data;
 };
  

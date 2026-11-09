@@ -775,7 +775,7 @@ function Profile() {
         imageConfirm.file,
       );
 
-      const res = await api.put("/api/profile", data, {
+      const res = await api.patch("/api/profile", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const updated = res.data?.data || res.data?.user || res.data;
@@ -909,7 +909,7 @@ function Profile() {
         if (exp.isNew || isTemporaryId || !expId) {
           res = await api.post("/api/experiences", payload);
         } else {
-          res = await api.put(`/api/experiences/${expId}`, payload);
+          res = await api.patch(`/api/experiences/${expId}`, payload);
         }
 
         // Extract object correctly based on payload structure
@@ -944,7 +944,7 @@ put("location", formData.location);
       if (avatarFile) data.append("avatar", avatarFile);
       if (coverFile) data.append("cover_image", coverFile);
 
-      await api.put("/api/profile", data, {
+      await api.patch("/api/profile", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
