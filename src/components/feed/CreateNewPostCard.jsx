@@ -40,7 +40,6 @@ const CreateNewPostCard = ({
   useEffect(() => {
     setAvatarFailed(false);
   }, [userAvatar]);
-  console.log("AVATAR BOX", { userAvatar, avatarFailed, avatarSrc });
 
   const handleAvatarSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -62,9 +61,6 @@ const CreateNewPostCard = ({
     } catch (error) {
       console.error("Avatar upload failed:", error);
       console.error("message:", error?.message, "| code:", error?.code);
-       setErrorMessage(
-        error.response?.data?.message || "Could not update your profile picture.",
-      );
       console.error(
         "Avatar upload failed:",
         error.response?.status,
@@ -146,20 +142,14 @@ const CreateNewPostCard = ({
     e.preventDefault();
 
     if (isSubmitting) return;
-<<<<<<< HEAD
     const placeholder =
       selectedMedia?.type === "video" ? "Video update" : "Photo update";
     const body = content.trim() || (selectedMedia ? placeholder : "");
     // const title = isArticleMode ? articleTitle.trim() : body.slice(0, 80);
-=======
-    const trimmed =  content.trim();
-
->>>>>>> 99e534f (My latest changes)
     const title = isArticleMode
       ? articleTitle.trim()
       : content.trim().slice(0, 80) ||
       (selectedMedia?.type === "video" ? "Video update" : "Photo update")
-      const body = trimmed || title;
     if (isArticleMode) {
       if (!articleTitle.trim())
         return setErrorMessage("Please enter an article title.");
@@ -173,11 +163,7 @@ const CreateNewPostCard = ({
     try {
       const formData = new FormData();
       formData.append("title", title);
-<<<<<<< HEAD
       formData.append("content", body);
-=======
-      formData.append("content",body);
->>>>>>> 99e534f (My latest changes)
       formData.append("is_published", true);
       if (selectedCategory && selectedCategory !== "Trending") {
         formData.append("tags", selectedCategory);
@@ -215,7 +201,6 @@ const CreateNewPostCard = ({
   return (
     <div className="bg-white p-4 rounded-2xl  border border-stone-200/80 shadow-sm space-y-3 font-sans">
       <div className="flex items-center gap-3">
-<<<<<<< HEAD
         <button
           type="button"
           onClick={() => avatarInputRef.current?.click()}
@@ -243,19 +228,6 @@ const CreateNewPostCard = ({
           ref={avatarInputRef}
           onChange={handleAvatarSelect}
           className="hidden"
-=======
-        <img
-          src={
-            (typeof userAvatar === "string" && userAvatar) ||
-            AvatarFallback(userName)
-          }
-          alt={userName}
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = AvatarFallback(userName);
-          }}
-          className="w-10 h-10 rounded-full object-cover border border-stone-200/80 bg-[#F7F4F0] shrink-0"
->>>>>>> 99e534f (My latest changes)
         />
 
         <div className="flex-1 flex flex-col min-w-0 items-center bg-[#F7F4F0] px-4 py-2.5 rounded-2xl border border-stone-200/50 focus-within:border-[#A8431D] transition-colors">
