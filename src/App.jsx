@@ -17,19 +17,20 @@ import Discover from "./pages/Discover.jsx";
 import Opportunities from "./pages/Opportunities";
 import CreateOpportunity from "./pages/CreateOpportunity.jsx";
 import Communities from "./pages/Communities.jsx";
-import CreateCommunity from "./pages/CreateCommunity.jsx"; // <-- Uncommented here
+import CreateCommunity from "./pages/CreateCommunity.jsx";
 import ProjectDetail from "./pages/ProjectDetail.jsx";
-import Notifications from './pages/Notifications'
-import NotificationSettings from './pages/NotificationSettings'
+import Notifications from "./pages/Notifications";
+import NotificationSettings from "./pages/NotificationSettings";
 import CommunityDetail from "./pages/CommunityDetails.jsx";
-import AuthorProfile from "./pages/AuthorProfile.jsx"
+import AuthorProfile from "./pages/AuthorProfile.jsx";
 import OpportunityDetail from "./pages/OpportunityDetail.jsx";
 import InstallPrompt from "./components/InstallPrompt.jsx";
+import Messages from "./pages/Messages";
+
 export default function App() {
   const [selectedTopic, setSelectedTopic] = React.useState(null);
 
   return (
-    
     <Router>
       <InstallPrompt />
       <Routes>
@@ -70,7 +71,7 @@ export default function App() {
               </MainLayout>
             }
           />
-          
+
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:username" element={<AuthorProfile />} />
           <Route path="/opportunities" element={<Opportunities />} />
@@ -82,7 +83,7 @@ export default function App() {
           <Route path="/communities/create" element={<CreateCommunity />} />
           <Route path="/communities/:slug" element={<CommunityDetail />} />
           <Route path="/notifications" element={<Notifications />} />
-
+          <Route path="/messages" element={<Messages />} />
 
           <Route
             path="/settings/notifications"
@@ -91,6 +92,5 @@ export default function App() {
         </Route>
       </Routes>
     </Router>
-    
   );
 }
