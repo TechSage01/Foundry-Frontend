@@ -13,7 +13,7 @@ import {
     Users,
 } from 'lucide-react'
 const navItems = [
-    {name: 'Home',            icon: Home,               path: "/"},
+    {name: 'Home',            icon: Home,               path: "/home"},
     {name: 'Discover',        icon: Compass,            path: "/discover"},
     {name: "Messages",        icon: MessageSquare,      path: "/messages"}, 
     {name: 'Opportunities',  icon: Briefcase,          path: "/opportunities"},

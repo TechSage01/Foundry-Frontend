@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     TrendingUp,
     Users,
@@ -6,7 +6,27 @@ import {
     ChevronRight
 } from 'lucide-react'
 
-const RightSidebar = () => {
+const INITIAL_TOPICS = [
+    { id: 1, tag: "#BuildInPublic", count: 1400 },
+    { id: 2, tag: "#IndieHackerMRR", count: 850 },
+    { id: 3, tag: "#AIAgents", count: 620 },
+    { id: 4, tag: "#DesignSystems", count: 410  },
+]
+const RightSidebar = ({ onSelectTopic, selectedTopic }) => {
+    const [topics, setTopics] = useState(INITIAL_TOPICS);
+    const formatCount = (num) => {
+        return num >= 1000 ? `${(num/1000).toFixed(1)}k`: num;
+    }
+    useEffect(()=> {
+        const interval = setInterval(()=> {
+            setTopics((prevTopics) => prevTopics.map((topic)=> {
+                    const increment = Math.floor(Math.random() * 3);
+                    return{...topic, count: topic.count + increment };
+                })
+            )
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
   return (
     <div className='space-y-4'>
         <div className='bg-[#FEF2EC] rounded-2xl p-4 border border-[#EFECE6]'>
@@ -18,20 +38,26 @@ const RightSidebar = () => {
                 <span className='text-[10px] text-gray-500 font-medium'>Live</span>
             </div>
             <div className='space-y-3'>
-                {[
-                    {tag: "#BuildInPublic",  count: "1.4k posts today"},
-                    {tag: "#IndieHackerMRR", count: "850 posts today"},
-                    {tag: "#AIAgents",       count: "620 posts today"},
-                    {tag: "DesignSystems",   count: "410 posts today"},
-                ].map((topic) => (
-                    <div key={topic.tag} className= "flex items-center justify-between text-xs cursor-pointer group">
-                        <div>
-                            <p className='font-semibold text-[#2D2D2D] group-hover:text-[#D97757]'>{topic.tag}</p>
-                            <p className="text-[10px] text-[#737373]">{topic.count}</p>
-                        </div>
-                        <ChevronRight className='w-3.5 h-3.5 text-[#737373]'/>
-                    </div>
-                ))}
+                {topics.map((item) => {
+                    const isActive = selectedTopic === item.tag
+                    
+                    return(
+                        <button
+                        key={item.id}
+                        type='button'
+                        onClick={() => onSelectTopic && onSelectTopic(isActive ? null : item.tag)}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all cursor-pointer group text-left ${isActive ? 'bg-[#A04622]/10 border border-[#A04622]/30'  : 'hover:bg-stone-200/60 border border-transparent'}`}
+                        >
+                            {/* <div key={item.tag} className= "flex items-center justify-between text-xs cursor-pointer group"> */}
+                                <div>
+                                    <p className={`text-xs font-bold transition-colors ${isActive ? 'text-[#A054622]' : 'text-stone-800 group-hover:text-[#A04622]' }`}>{item.tag}</p>
+                                    <p className="text-[10px] text-[#737373]">{formatCount(item.count)} posts today</p>
+                                </div>
+                                <ChevronRight className={`w-3.5 h-3.5 text-[#737373] transition-transform  ${ isActive ? 'text-[#A04622] translate-x-0.5' : 'text-stone-400 group-hover:text-stone-700 group-hover:translate-x-0.5'}`}/>
+                            {/* </div> */}
+                        </button>
+                    )
+                })}
             </div>
         </div>
         <div className='bg-[#F4F2E2] rounded-2xl p-4 border border-[#EFECE6]'>
