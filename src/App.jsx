@@ -10,7 +10,7 @@ import Opportunities from "./pages/Opportunities";
 import Communities from "./pages/Communities.jsx";
 import CreateCommunity from "./pages/CreateCommunity.jsx";
 import Notifications from "./pages/Notifications";
-import NotificationSettings from "./pages/NotificationSettings";
+import NotificationSettings from "./pages/NotificationSettings";                                                                                                                                                                                                                                                                                                                                                                                                                       
 import Messages from "./pages/Messages";
 
 export default function App() {
