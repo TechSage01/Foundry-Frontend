@@ -119,10 +119,3 @@ export const uploadAvatarApi = async (file, user) => {
   const m = me.data?.data || me.data?.user || me.data;
   return m?.avatar_url || m?.avatar || URL.createObjectURL(file);
 }
-
-export const setRepostApi = async (postId, isReposting) => {
-  const res = isReposting
-    ? await api.post(`/api/posts/${postId}/repost`)
-    : await api.delete(`/api/posts/${postId}/repost`);
-  return res.data?.data || res.data;
-};

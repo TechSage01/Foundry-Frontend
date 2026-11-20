@@ -70,23 +70,6 @@ function Profile() {
   const [followingCount, setFollowingCount] = useState(0);
   const [createChooserOpen, setCreateChooserOpen] = useState(false);
   const [projectCoverPreview, setProjectCoverPreview] = useState(false);
-  const [drafts, setDrafts] = useState([]);
-  const fetchUserDrafts = async () => {
-    try {
-      const res = await api.get("/api/posts/me/drafts");
-      setDrafts(toArray(res.data, "posts", "items", "results", "rows"));
-    } catch (error) {
-      if (error.response?.status === 404) {
-        setDrafts([]);
-      } else {
-        console.error(
-          "Failed to fetch drafts:",
-          error.response?.status,
-          error.response?.data,
-        );
-      }
-    }
-  };
   const [projectForm, setProjectForm] = useState({
     title: "",
     tagLine: "",
