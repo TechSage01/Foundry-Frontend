@@ -75,13 +75,22 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:username" element={<AuthorProfile />} />
           <Route path="/opportunities" element={<Opportunities />} />
-          <Route path="/opportunities/create" element={<CreateOpportunity />} />
+
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:username" element={<AuthorProfile />} />
+          <Route path="/opportunities" element={<Opportunities />} />
+          <Route
+            path="/opportunities/create"
+            element={<CreateOpportunity />}
+          />
           <Route path="/opportunities/:id/edit" element={<CreateOpportunity />} />
           <Route path="/opportunities/:id" element={<OpportunityDetail />} />
           <Route path="/projects/:slug" element={<ProjectDetail />} />
           <Route path="/communities" element={<Communities />} />
           <Route path="/communities/create" element={<CreateCommunity />} />
           <Route path="/communities/:slug" element={<CommunityDetail />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/messages" element={<Messages />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/messages" element={<Messages />} />
 
