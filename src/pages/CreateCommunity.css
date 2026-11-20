@@ -711,7 +711,7 @@
   cursor: pointer;
   transition: background 0.2s ease;
 }
-.verification-item input[type+"checkbox"]::after {
+.verification-item input[type="checkbox"]::after {
   content: "";
   position: absolute;
   top: 3px;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
-  Star,
+  Heart,
   Bookmark,
   Share2,
   Clock,
@@ -18,12 +18,39 @@ import {
   Send,
   Upload,
   Search,
-  // Trash2,
+  UserPlus,
   Edit3,
 } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import api from "../services/api";
-
+import { findBuilders } from "../services/search";
+import { fetchProjectLikesApi, likeStateOf, toggleProjectLikeApi } from "../services/projectLikes";
+const formatPostTime = (dateInput) => {
+  if (!dateInput) return { relative: "Recently", exact: "" };
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return { relative: "Recently", exact: "" };
+  const exact = date.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  let relative;
+  if (diffInSeconds < 45) relative = "Just now";
+  else if (diffInSeconds < 90) relative = "1 minute ago";
+  else if (diffInSeconds < 3600)
+    relative = `${Math.max(1, Math.round(diffInSeconds / 60))} min ago`;
+  else if (diffInSeconds < 7200) relative = "1 hour ago";
+  else if (diffInSeconds < 86400) {
+    const h = Math.floor(diffInSeconds / 3600);
+    relative = `${h} hour${h > 1 ? "s" : ""} ago`;
+  } else if (diffInSeconds < 7 * 86400) {
+    const d = Math.floor(diffInSeconds / 86400);
+    relative = `${d} day${d > 1 ? "s" : ""} ago`;
+  } else relative = exact;
+  return { relative, exact };
+};
+const isDone = (p) =>
+  Boolean(p?.is_completed ?? p?.done ?? p?.isCompleted ?? p?.isDone);
 export const ProjectComponents = ({
   project: initialProject = {},
   currentUser = {},
@@ -33,10 +60,9 @@ export const ProjectComponents = ({
   api,
 }) => {
   const [project, setProject] = useState(initialProject);
-  const [starred, setStarred] = useState(false);
-  const [starCount, setStarCount] = useState(
-    project.stars || project.star_count || 0,
-  );
+  const [starred, setStarred] = useState(likeStateOf(initialProject).liked);
+  const [starCount, setStarCount] = useState(likeStateOf(initialProject).count);
+  const [likeBusy, setLikeBusy] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
@@ -67,7 +93,6 @@ export const ProjectComponents = ({
     currentUser?._id || currentUser?.id || currentUser?.userId || "",
   ).trim();
 
-
   // 2. Extract Current User Name / Handle
   const currentUsername = String(
     currentUser?.username ||
@@ -78,14 +103,14 @@ export const ProjectComponents = ({
   )
     .toLowerCase()
     .trim();
-    const authorObj =
+  const authorObj =
     typeof project?.author === "object" && project?.author !== null
       ? project.author
       : typeof project?.user === "object" && project?.user !== null
-      ? project.user
-      : null;
+        ? project.user
+        : null;
 
-const rawUserId =
+  const rawUserId =
     authorObj?._id ||
     authorObj?.id ||
     project?.author_id ||
@@ -94,26 +119,29 @@ const rawUserId =
     (typeof project?.author === "string" ? project.author : "") ||
     (typeof project?.user === "string" ? project.user : "");
 
-const authorId = String(
-  typeof rawUserId === "object" && rawUserId !== null 
-    ? rawUserId._id || rawUserId.id 
-    : rawUserId
-)
-  .trim()
-  .replace(/^"|"$/g, ""); 
-  
-const projectUsername = String(
-  authorObj?.username ||
+  const authorId = String(
+    typeof rawUserId === "object" && rawUserId !== null
+      ? rawUserId._id || rawUserId.id
+      : rawUserId,
+  )
+    .trim()
+    .replace(/^"|"$/g, "");
+
+  const projectUsername = String(
+    authorObj?.username ||
       project?.author_name ||
       project?.authorName ||
       project?.username ||
-      ""
+      "",
   )
     .toLowerCase()
     .trim();
 
-// Resolve Author Name display
-const authorName =
+  // the API may only send an id for the author; if that is the viewer, use the viewer's own details
+  const viewerIsAuthor = Boolean(currentUserId && authorId && currentUserId === authorId);
+
+  // Resolve Author Name display
+  const authorName =
     authorObj?.full_name ||
     authorObj?.fullName ||
     authorObj?.name ||
@@ -121,52 +149,51 @@ const authorName =
     project?.author_name ||
     project?.authorName ||
     project?.username ||
+    (viewerIsAuthor
+      ? currentUser?.full_name || currentUser?.name || currentUser?.username
+      : "") ||
     "Developer";
 
-  
   const authorAvatar =
     typeof authorObj === "object" && authorObj !== null
       ? authorObj?.profilePicture ||
         authorObj?.avatar_url ||
         authorObj?.avatar ||
         authorObj?.image
-      : project.avatar || project.author_avatar;
+      : project.avatar ||
+        project.author_avatar ||
+        (viewerIsAuthor ? currentUser?.avatar_url || currentUser?.avatar : undefined);
 
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
     authorName,
   )}&background=A04622&color=fff`;
 
-const matchesId = Boolean(
-  currentUserId && authorId && String(currentUserId) === String(authorId)
-);
-
-const matchesUsername = Boolean(
-  currentUsername &&
-  projectUsername &&
-  currentUsername.toLowerCase() === projectUsername.toLowerCase()
-);
-
-// const isAuthor = Boolean(
-  const isAuthor = Boolean(
-    Boolean(isAuthorProp) || matchesId || matchesUsername
+  // teammates tagged on the project (objects with names, or just ids)
+  const rawTeam =
+    project?.team || project?.teammates || project?.members || project?.collaborators || [];
+  const teamList = (Array.isArray(rawTeam) ? rawTeam : []).map((m) =>
+    typeof m === "object" && m !== null ? m : { id: m },
   );
-  
 
-console.log("AUTHOR EVALUATION RESULT:", { matchesId, matchesUsername, isAuthor });
+  const matchesId = Boolean(
+    currentUserId && authorId && String(currentUserId) === String(authorId),
+  );
 
-  console.log("DEBUG AUTHOR CHECK:", {
-    currentUserId,
-    authorId,
-    currentUsername,
-    projectUsername,
-    isAuthorProp,
-    isAuthor,
-  });
+  const matchesUsername = Boolean(
+    currentUsername &&
+    projectUsername &&
+    currentUsername.toLowerCase() === projectUsername.toLowerCase(),
+  );
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((n) => n + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
+  const isAuthor = Boolean(
+    Boolean(isAuthorProp) || matchesId || matchesUsername,
+  );
   const projectId = project._id || project.id;
-console.log("PROJECT KEYS:", Object.keys(project || {}));
-console.log("FULL PROJECT OBJ:", project);
-  // Sync prop changes
   useEffect(() => {
     setProject(initialProject);
     setPhases(initialProject.phases || []);
@@ -178,7 +205,8 @@ console.log("FULL PROJECT OBJ:", project);
       demo_url: initialProject.demo_url || initialProject.demoUrl || "",
       github_url: initialProject.github_url || initialProject.githubUrl || "",
     });
-    setStarCount(initialProject.stars || initialProject.star_count || 0);
+    setStarred(likeStateOf(initialProject).liked);
+    setStarCount(likeStateOf(initialProject).count);
   }, [initialProject]);
 
   // Project Update Handler
@@ -189,7 +217,7 @@ console.log("FULL PROJECT OBJ:", project);
     setLoading(true);
     try {
       if (api) {
-        const response = await api.put(`/api/projects/${projectId}`, editForm);
+        const response = await api.patch(`/api/projects/${projectId}`, editForm);
         setProject(response.data?.project || { ...project, ...editForm });
       } else {
         setProject({ ...project, ...editForm });
@@ -229,7 +257,6 @@ console.log("FULL PROJECT OBJ:", project);
   };
 
   // Add Phase Handler
- // Add Phase Handler
   const handleAddPhase = async (e) => {
     e.preventDefault();
     if (!isAuthor || !newPhaseTitle.trim()) return;
@@ -245,44 +272,80 @@ console.log("FULL PROJECT OBJ:", project);
     ];
 
     try {
-      /* 🔴 Commented out until backend roadmap endpoint is ready
-      if (api) {
-        await api.put(`/api/projects/${projectId}`, { phases: updatedPhases });
-      }
-      */
+      const res = await api.post(`/api/projects/${projectId}/phases`, {
+        title: newPhaseTitle,
+        description: newPhaseDesc,
+        completed: false,
+      });
+      const created =
+        res.data?.data ||
+        res.data?.phase ||
+        res.data ||
+        updatedPhases[updatedPhases.length - 1];
 
-      // 🟢 Local UI State Update
-      setPhases(updatedPhases);
+      setPhases((prev) => [...prev, created]);
       setNewPhaseTitle("");
       setNewPhaseDesc("");
       setShowAddPhase(false);
     } catch (err) {
       console.error("Failed to add phase:", err);
-      alert("Could not update roadmap phase.");
+      alert(err.response?.data?.message || "Could not update roadmap phase.");
     }
   };
 
   // Toggle Phase Completion
   const handleTogglePhase = async (index) => {
     if (!isAuthor) return;
-    const updatedPhases = phases.map((p, idx) =>
-      idx === index ? { ...p, completed: !p.completed } : p,
-    );
+
+    const phase = phases[index];
+    if (!phase) return;
+
+    const phaseId = phase._id || phase.id;
+    if (!phaseId) return;
 
     try {
-      /*  Commented out until backend roadmap endpoint is ready
-      if (api) {
-        await api.put(`/api/projects/${projectId}`, { phases: updatedPhases });
-      }
-      */
+      const res = await api.patch(`/api/projects/phases/${phaseId}/toggle`);
+      const updated = res.data?.data || res.data?.phase || res.data;
+      const serverValue =
+        updated?.completed ??
+        updated?.is_completed ??
+        updated?.done ??
+        updated?.isDone;
+      const next =
+        serverValue !== undefined ? Boolean(serverValue) : !phase.completed;
 
-      // Local UI State Update
-      setPhases(updatedPhases);
+      setPhases((prev) =>
+        prev.map((p, i) =>
+          i === index
+            ? {
+                ...p,
+                is_completed: next,
+                completed: next,
+              }
+            : p,
+        ),
+      );
     } catch (err) {
       console.error("Failed to update phase status:", err);
+      alert(err.response?.data?.message || "could not update phase");
     }
   };
-
+  const handleDeletePhases = async (phaseId, title) => {
+    if (!isAuthor || !phaseId) return;
+    if (
+      !window.confirm(`Delete phase "${title}"? This action cannot be undone.`)
+    )
+      return;
+    const previous = phases;
+    setPhases((prev) => prev.filter((p) => (p._id || p.id) !== phaseId));
+    try {
+      await api.delete(`/api/projects/phases/${phaseId}`);
+    } catch (err) {
+      console.error("Failed to delete phase:", err);
+      setPhases(previous);
+      alert(err.response?.data?.message || "Could not delete phase.");
+    }
+  };
   // Add Update Post Handler
   const handleAddUpdate = async (e) => {
     e.preventDefault();
@@ -301,13 +364,17 @@ console.log("FULL PROJECT OBJ:", project);
 
         const response = await api.post("/api/posts", payload);
 
-        const createdPost = response.data?.post || response.data || {
+        const createdPost = {
           content: newUpdateText,
-          createdAt: new Date().toISOString(),
+          createdAt: response.data?.createdAt || new Date().toISOString(),
           author: authorName,
+          ...(response.data?.post ||
+            response.data?.data ||
+            response.data ||
+            {}),
         };
 
-        setUpdates([createdPost, ...updates]);
+        setUpdates((prev) => [createdPost, ...prev]);
       } else {
         const localEntry = {
           content: newUpdateText,
@@ -323,18 +390,62 @@ console.log("FULL PROJECT OBJ:", project);
       console.error("Failed to post update:", err.response?.data || err);
       // Display specific validation message returned from backend
       alert(
-        err.response?.data?.message || 
-        err.response?.data?.error || 
-        "Failed to post update. Check request validation."
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Failed to post update. Check request validation.",
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStarToggle = () => {
-    setStarred(!starred);
-    setStarCount((prev) => (starred ? prev - 1 : prev + 1));
+  // fresh like count (and whether you liked it) when the page opens
+  useEffect(() => {
+    const id = initialProject._id || initialProject.id;
+    if (!id) return;
+    let alive = true;
+    try {
+      const saved = JSON.parse(localStorage.getItem("foundry_liked_projects") || "[]");
+      if (saved.map(String).includes(String(id))) setStarred(true);
+    } catch {}
+    fetchProjectLikesApi(id)
+      .then((r) => {
+        if (!alive) return;
+        if (r.count !== undefined) setStarCount(r.count);
+        if (r.liked !== undefined) setStarred(r.liked);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [initialProject]);
+
+  const handleStarToggle = async () => {
+    if (likeBusy) return;
+    const wasLiked = starred;
+    const wasCount = starCount;
+    setLikeBusy(true);
+    setStarred(!wasLiked);
+    setStarCount(Math.max(0, wasCount + (wasLiked ? -1 : 1)));
+    try {
+      const r = await toggleProjectLikeApi(projectId);
+      // trust the server when it tells us the real state
+      const nowLiked = r.liked !== undefined ? r.liked : !wasLiked;
+      setStarred(nowLiked);
+      try {
+        const set = new Set(JSON.parse(localStorage.getItem("foundry_liked_projects") || "[]").map(String));
+        if (nowLiked) set.add(String(projectId));
+        else set.delete(String(projectId));
+        localStorage.setItem("foundry_liked_projects", JSON.stringify([...set]));
+      } catch {}
+      if (r.count !== undefined) setStarCount(r.count);
+    } catch (err) {
+      console.error("Failed to toggle like", err.response?.status, err.response?.data);
+      setStarred(wasLiked);
+      setStarCount(wasCount);
+    } finally {
+      setLikeBusy(false);
+    }
   };
 
   const handleShare = async () => {
@@ -354,16 +465,21 @@ console.log("FULL PROJECT OBJ:", project);
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 text-[#1C1917] pb-12 font-sans">
+    <div className="w-full px-4 sm:px-6 space-y-5 text-[#1C1917] pb-12 font-sans">
       {/* Top Header Navigation & Author Controls */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-xs font-semibold text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Projects</span>
-        </button>
+      <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 h-14 bg-white/85 backdrop-blur border-b border-stone-200/70 flex items-center justify-between">
+        <div className="flex items-center gap-5 min-w-0">
+          <button
+            onClick={onBack}
+            aria-label="Back to projects"
+            className="w-9 h-9 -ml-2 rounded-full flex items-center justify-center text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer shrink-0"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div className="min-w-0">
+            <p className="text-lg font-extrabold text-stone-900 leading-tight truncate">Project</p>
+          </div>
+        </div>
 
         {/* RESTRICTED: Author Action Controls */}
         {isAuthor && (
@@ -403,9 +519,9 @@ console.log("FULL PROJECT OBJ:", project);
       </div>
 
       {/* Main Banner Header Card */}
-      <div className="bg-[#FAF8F5] rounded-3xl p-6 border border-stone-200/80 shadow-xs flex flex-col md:flex-row md:items-start justify-between gap-6">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-stone-200 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6">
         <div className="flex items-start gap-4 flex-1">
-          <div className="w-16 h-16 rounded-2xl bg-[#A04622] text-white flex items-center justify-center font-bold text-xl border border-stone-200/60 shadow-xs shrink-0 overflow-hidden">
+          <div className="w-16 h-16 rounded-2xl bg-[#A04622] text-white flex items-center justify-center font-bold text-xl border border-stone-200/60 shrink-0 overflow-hidden">
             {authorAvatar ? (
               <img
                 src={authorAvatar}
@@ -558,14 +674,16 @@ console.log("FULL PROJECT OBJ:", project);
         <div className="flex items-center gap-2 shrink-0 self-start md:self-auto">
           <button
             onClick={handleStarToggle}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
+            disabled={likeBusy}
+            aria-pressed={starred}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all border ${
               starred
-                ? "bg-[#A04622] text-white shadow-xs"
-                : "bg-[#A04622] text-white hover:bg-[#8A3A1B]"
+                ? "bg-[#f91880]/10 border-[#f91880]/30 text-[#f91880]"
+                : "bg-white border-stone-300 text-stone-700 hover:bg-stone-50"
             }`}
           >
-            <Star size={14} className={starred ? "fill-white" : ""} />
-            <span>Star {starCount}</span>
+            <Heart size={15} className={starred ? "fill-[#f91880] text-[#f91880]" : ""} />
+            <span>{starred ? "Liked" : "Like"} · {starCount}</span>
           </button>
 
           <button
@@ -596,7 +714,7 @@ console.log("FULL PROJECT OBJ:", project);
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-stone-200 flex items-center gap-6 text-xs font-semibold text-stone-500 overflow-x-auto">
+      <div className="border-b border-stone-200 flex items-center text-sm font-medium text-stone-500 overflow-x-auto [scrollbar-width:none]">
         {[
           "Overview",
           "Journey & Milestones",
@@ -606,15 +724,15 @@ console.log("FULL PROJECT OBJ:", project);
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-3 px-1 transition-colors relative cursor-pointer whitespace-nowrap ${
+            className={`py-3.5 px-4 transition-colors relative cursor-pointer whitespace-nowrap hover:bg-stone-100 ${
               activeTab === tab
-                ? "text-[#A04622] font-bold"
+                ? "text-stone-900 font-bold"
                 : "hover:text-stone-900"
             }`}
           >
             {tab}
             {activeTab === tab && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#A04622] rounded-full" />
+              <span className="absolute bottom-0 left-3 right-3 h-1 bg-[#A04622] rounded-full" />
             )}
           </button>
         ))}
@@ -625,7 +743,7 @@ console.log("FULL PROJECT OBJ:", project);
         <div className="lg:col-span-8 space-y-6">
           {activeTab === "Overview" && (
             <>
-              <div className="bg-stone-900 rounded-3xl overflow-hidden border border-stone-200/80 shadow-xs relative group">
+              <div className="bg-stone-900 rounded-2xl overflow-hidden border border-stone-200/80 relative group">
                 <img
                   src={
                     project.cover_image_url ||
@@ -648,7 +766,7 @@ console.log("FULL PROJECT OBJ:", project);
                 )}
               </div>
 
-              <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-stone-400">
                   About this Project
                 </h2>
@@ -663,11 +781,15 @@ console.log("FULL PROJECT OBJ:", project);
 
           {(activeTab === "Overview" ||
             activeTab === "Journey & Milestones") && (
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-stone-900">
                   Interactive Journey & Roadmap
                 </h2>
+                <p className="text-[10px] text-stone-400">
+                  debug: projectId={String(projectId)} isAuthor=
+                  {String(isAuthor)} phases={phases.length}
+                </p>
 
                 {/* RESTRICTED: Only Author can add Roadmap Phases */}
                 {isAuthor && (
@@ -724,7 +846,9 @@ console.log("FULL PROJECT OBJ:", project);
                     No project roadmap phases published yet.
                   </p>
                 ) : (
-                  phases.map((phase, idx) => (
+                  phases.map((phase, idx) => {
+                    const done = isDone(phase);
+                    return(
                     <div
                       key={phase.id || idx}
                       className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1 transition-all"
@@ -744,42 +868,55 @@ console.log("FULL PROJECT OBJ:", project);
 
                         {/* RESTRICTED: Only Author can toggle phase status */}
                         {isAuthor ? (
-                          <button
-                            onClick={() => handleTogglePhase(idx)}
-                            className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold cursor-pointer border transition-colors ${
-                              phase.completed
-                                ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200"
-                                : "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
-                            }`}
-                          >
-                            {phase.completed ? "Completed ✓" : "Mark Completed"}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleTogglePhase(idx)}
+                              className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold cursor-pointer border transition-colors ${
+                                done
+                                  ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200"
+                                  : "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
+                              }`}
+                            >
+                              {done ? "Completed ✓" : "Mark Completed"}
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeletePhases(
+                                  phase._id || phase.id,
+                                  phase.title,
+                                )
+                              }
+                              title="Delete Phase"
+                              className="p-1 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         ) : (
                           <span
                             className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${
-                              phase.completed
+                              done
                                 ? "bg-emerald-100 text-emerald-800 border-emerald-200"
                                 : "bg-amber-100 text-amber-800 border-amber-200"
                             }`}
                           >
-                            {phase.completed ? "Completed" : "In Progress"}
+                            {done ? "Completed" : "In Progress"}
                           </span>
                         )}
                       </div>
-                      {phase.description && (
-                        <p className="text-[11px] text-stone-500 pl-6">
-                          {phase.description}
-                        </p>
+                       {phase.description && (
+                        <p className="text-[11px] text-stone-500 pl-6">{phase.description}</p>
                       )}
                     </div>
-                  ))
-                )}
+                    );
+                })
+              )}
               </div>
             </div>
           )}
 
           {(activeTab === "Overview" || activeTab === "Updates") && (
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-stone-900">
                   Latest Project Updates
@@ -833,33 +970,42 @@ console.log("FULL PROJECT OBJ:", project);
                     No updates logged yet.
                   </p>
                 ) : (
-                  updates.map((item, idx) => (
+                  updates.map((item, idx) => {
+                    const t = formatPostTime(
+                      item.createdAt || item.updatedAt || item.created_at,
+                    );
+                    const postAuthor =
+                      typeof item.author === "object" && item.author !== null
+                        ? item.author.name || item.author.username || authorName
+                        : item.author || authorName;
                     <div
-                      key={idx}
+                      key={item._id || item.id || idx}
                       className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-stone-800">
-                          {item.author || authorName}
+                          {postAuthor}
                         </span>
-                        <span className="text-[10px] text-stone-400">
-                          {item.createdAt
-                            ? new Date(item.createdAt).toLocaleDateString()
-                            : "Recently"}
+                        <span
+                          className="text-[10px] text-stone-400"
+                          title={t.exact}
+                        >
+                          {t.relative}
+                          {t.exact && t.relative !== t.exact && ` · ${t.exact}`}
                         </span>
                       </div>
                       <p className="text-xs text-stone-600 leading-relaxed">
-                        {item.content}
+                        {item.content || item.body || "No content provided."}
                       </p>
                     </div>
-                  ))
+                  })
                 )}
               </div>
             </div>
           )}
 
           {activeTab === "Resources & Code" && (
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
               <h2 className="text-sm font-bold text-stone-900">
                 Resources & Code Repositories
               </h2>
@@ -918,7 +1064,7 @@ console.log("FULL PROJECT OBJ:", project);
 
         {/* Sidebar Info */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
             <h2 className="text-xs font-bold uppercase tracking-wider text-stone-400">
               Project Author
             </h2>
@@ -938,6 +1084,50 @@ console.log("FULL PROJECT OBJ:", project);
               </div>
             </div>
           </div>
+
+          {teamList.length > 0 && (
+            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-stone-400">
+                Team ({teamList.length})
+              </h2>
+              <div className="space-y-3">
+                {teamList.map((m, i) => {
+                  const name = m.full_name || m.name || m.username || "Teammate";
+                  const username = m.username || m.user_name;
+                  const avatar =
+                    m.avatar_url ||
+                    m.avatar ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=A04622&color=fff`;
+                  const row = (
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={avatar}
+                        alt={name}
+                        className="w-10 h-10 rounded-full object-cover border border-stone-200"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=A04622&color=fff`;
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-stone-900 truncate">{name}</p>
+                        <p className="text-[10px] text-stone-500 truncate">
+                          {username ? `@${username}` : "Team member"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                  return username ? (
+                    <a key={m.id || m._id || username || i} href={`/profile/${username}`} className="block hover:opacity-80">
+                      {row}
+                    </a>
+                  ) : (
+                    <div key={m.id || m._id || i}>{row}</div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -980,18 +1170,16 @@ export const SubmitProjectModal = ({ onClose, onSubmit, isSubmitting }) => {
 
   const handleSearchUsers = async (query) => {
     setSearchQuery(query);
-    if (!query.trim()) {
+    // "@" or "#" alone is not a name yet
+    if (!query.replace(/^[@#]+/, "").trim()) {
       setSearchResults([]);
       return;
     }
 
     try {
       setIsSearching(true);
-      const res = await api.get(
-        `/api/users/search?q=${encodeURIComponent(query)}`,
-      );
-      const data = res.data?.users || res.data?.data || res.data || [];
-      setSearchResults(Array.isArray(data) ? data : []);
+      const found = await findBuilders(query);
+      setSearchResults(found);
     } catch (err) {
       console.error("Error searching builders:", err);
       setSearchResults([]);
@@ -1169,7 +1357,7 @@ export const SubmitProjectModal = ({ onClose, onSubmit, isSubmitting }) => {
                         >
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded-full bg-stone-200 text-[10px] font-bold flex items-center justify-center text-stone-700">
-                              {user.name ? user.name[0] : "U"}
+                              {(user.name || user.username || "U")[0].toUpperCase()}
                             </div>
                             <div>
                               <p className="text-xs font-semibold text-stone-800">
@@ -1183,6 +1371,10 @@ export const SubmitProjectModal = ({ onClose, onSubmit, isSubmitting }) => {
                           <UserPlus size={14} className="text-[#A04622]" />
                         </div>
                       ))
+                    ) : !searchQuery.replace(/^[@#]+/, "").trim() ? (
+                      <p className="p-3 text-[11px] text-stone-400">
+                        Keep typing a username or name...
+                      </p>
                     ) : (
                       <p className="p-3 text-[11px] text-stone-400">
                         No builders found
