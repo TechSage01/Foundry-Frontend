@@ -1,20 +1,52 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import api from '../services/api';
 
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // 1. Inspect all incoming URL params for debugging
-    navigate('/home', { replace: true });
-  }, [navigate])
+    let alive = true;
+    const oauthError = searchParams.get('error') || searchParams.get('message') || searchParams.get('error_description');
+
+    if (oauthError) {
+      setError(decodeURIComponent(oauthError));
+      return;
+    }
+
+    api.get('/api/auth/me')
+      .then(() => alive && navigate('/home', { replace: true }))
+      .catch((err) => {
+        if (!alive) return;
+        setError(err.response?.data?.message || 'We could not complete social sign-in. Please try again.');
+      });
+
+    return () => { alive = false; };
+  }, [navigate, searchParams])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-900 text-stone-200">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-medium">Authenticating session...</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#F7F5F0] px-4 text-[#1C1917]">
+      <div className="w-full max-w-sm rounded-3xl border border-stone-200 bg-white p-8 text-center shadow-sm">
+        {error ? (
+          <>
+            <h1 className="text-xl font-bold">Sign-in could not be completed</h1>
+            <p className="mt-2 text-sm text-stone-500">{error}</p>
+            <button
+              type="button"
+              onClick={() => navigate('/signin', { replace: true })}
+              className="mt-6 w-full rounded-full bg-[#A04622] px-4 py-3 text-sm font-bold text-white hover:bg-[#85381a] cursor-pointer"
+            >
+              Back to sign-in
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[#A04622] border-t-transparent" />
+            <p className="text-sm font-medium">Completing social sign-in...</p>
+          </>
+        )}
       </div>
     </div>
   );

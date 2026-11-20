@@ -26,6 +26,9 @@ import AuthorProfile from "./pages/AuthorProfile.jsx";
 import OpportunityDetail from "./pages/OpportunityDetail.jsx";
 import InstallPrompt from "./components/InstallPrompt.jsx";
 import Messages from "./pages/Messages";
+import ProjectsPage from "./pages/ProjectsPage";
+import PricingPage from "./pages/PricingPage";
+import OpportunitiesLandingPage from "./pages/OpportunitiesLandingPage";
 
 export default function App() {
   const [selectedTopic, setSelectedTopic] = React.useState(null);
@@ -41,6 +44,9 @@ export default function App() {
         <Route path="/manifesto" element={<ManifestoPage />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/auth/callback" element={<OAuthCallback />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/opportunities" element={<OpportunitiesLandingPage />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoutes />}>
@@ -74,11 +80,6 @@ export default function App() {
 
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:username" element={<AuthorProfile />} />
-          <Route path="/opportunities" element={<Opportunities />} />
-
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/:username" element={<AuthorProfile />} />
-          <Route path="/opportunities" element={<Opportunities />} />
           <Route
             path="/opportunities/create"
             element={<CreateOpportunity />}

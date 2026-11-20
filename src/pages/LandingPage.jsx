@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import foundryLogo from "../assets/foundry-logo.png";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { requestOtpApi } from "../services/auth";
 
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -22,7 +22,8 @@ const LandingPage = () => {
       setLoadingType(email);
       setError("");
 
-      await axios.post(`${API_URL}/api/auth/send-otp`, { email });
+      await requestOtpApi(email);
+      sessionStorage.setItem("foundryOtpEmail", email);
 
       // I Pass email via router state to /verify page
       navigate("/verify", { state: { email } });
@@ -1111,7 +1112,7 @@ const LandingPage = () => {
                   </a>
                 </li>
                 <li>
-                  <a href="/opportunties" className="hover:text-stone-900">
+                  <a href="/opportunities" className="hover:text-stone-900">
                     Opportunities
                   </a>
                 </li>

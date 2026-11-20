@@ -5,12 +5,12 @@ import linkedinIcon from "../assets/icons/linkedin.png";
 import xIcon from "../assets/icons/x.png";
 import foundryLogo from "../assets/foundry-logo.png";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { requestOtpApi } from "../services/auth";
 import { React, useEffect, useState } from "react";
 import { useSearchParams } from 'react-router-dom'
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://foundry-00kt.onrender.com";
+  import.meta.env.VITE_API_URL || "https://foundry-backend-ux47.onrender.com";
 
 function SignIn() {
   const [email, setEmail] = useState("");
@@ -35,19 +35,9 @@ useEffect(() => {
     try {
       setLoading(true);
       setError("");
-      const response = await axios.post(
-        `${API_URL}/api/auth/login`,
-        { email },
-        {
-          withCredentials: true,
-          headers: {
-            "content-type": "application/json",
-          },
-        },
-      );
-      if (response.status === 200 || response.status === 201) {
-        navigate("/verify", {state: { email } });
-      }
+      await requestOtpApi(email);
+      sessionStorage.setItem("foundryOtpEmail", email);
+      navigate("/verify", { state: { email } });
     } catch (err) {
       console.error("Sign-in errors", err);
       setError(

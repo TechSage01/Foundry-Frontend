@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://foundry-backend-ux47.onrender.com/',
+  baseURL: import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://foundry-backend-ux47.onrender.com'),
   method: 'get',
   withCredentials: true, // 
   headers: {
@@ -15,6 +15,8 @@ const NO_REFRESH = [
   'api/auth/login',
   'api/auth/register',
   'api/auth/verify',
+  'api/auth/request-otp',
+  'api/auth/verify-otp',
 ];
 let refreshPromise = null;
 api.interceptors.response.use(
