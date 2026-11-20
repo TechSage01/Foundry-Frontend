@@ -82,9 +82,17 @@ const VerifyOtp = () => {
       sessionStorage.removeItem("foundryOtpEmail");
       navigate("/home", { replace: true });
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Invalid code. Please try again.",
-      );
+      const data = err.response?.data;
+      const message =
+        data?.message ||
+        data?.error ||
+        data?.errors?.code?.[0] ||
+        data?.errors?.otp?.[0] ||
+        (err instanceof Error ? err.message : "") ||
+        "Invalid code. Please try again.";
+      setError(message);
+      console.error("OTP verification failed:", err.response?.status, data || err);
+
     } finally {
       setLoading(false);
     }
