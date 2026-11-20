@@ -1112,7 +1112,7 @@ const LandingPage = () => {
                   </a>
                 </li>
                 <li>
-                  <a href="/opportunties" className="hover:text-stone-900">
+                  <a href="/opportunities" className="hover:text-stone-900">
                     Opportunities
                   </a>
                 </li>
