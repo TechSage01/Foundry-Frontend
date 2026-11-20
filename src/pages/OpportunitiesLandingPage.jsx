@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Briefcase, Loader2, MapPin, Search } from "lucide-react";
-import foundryLogo from "../assets/foundry-logo.png";
+import PublicHeader from "../components/layout/PublicHeader";
 import { fetchOpportunitiesApi } from "../services/opportunities";
 
 export default function OpportunitiesLandingPage() {
@@ -28,23 +28,7 @@ export default function OpportunitiesLandingPage() {
 
   return (
     <main className="min-h-screen bg-[#FAF8F5] text-[#1C1917]">
-      <nav className="sticky top-0 z-40 border-b border-stone-200/70 bg-[#FAF8F5]/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={foundryLogo} alt="Foundry" className="h-7 w-7 object-contain" />
-            <span className="text-lg font-bold">Foundry</span>
-          </Link>
-          <div className="hidden items-center gap-6 text-sm text-stone-600 md:flex">
-            <Link to="/manifesto" className="hover:text-stone-950">Manifesto</Link>
-            <Link to="/explore" className="hover:text-stone-950">Explore</Link>
-            <Link to="/projects" className="hover:text-stone-950">Projects</Link>
-            <Link to="/pricing" className="hover:text-stone-950">Pricing & Ecosystem</Link>
-          </div>
-          <Link to="/signin" className="rounded-lg bg-[#C66A47] px-4 py-2 text-sm font-semibold text-white hover:bg-[#A8431D]">
-            Join Foundry
-          </Link>
-        </div>
-      </nav>
+      <PublicHeader />
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#C66A47]">High-signal opportunities</p>
