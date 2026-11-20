@@ -5,7 +5,8 @@ import foundryLogo from "../assets/foundry-logo.png";
 const VerifyOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email || sessionStorage.getItem("foundryOtpEmail") || "";
+  const email =
+    location.state?.email || sessionStorage.getItem("foundryOtpEmail") || "";
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(45);
   const [loading, setLoading] = useState(false);
@@ -78,21 +79,30 @@ const VerifyOtp = () => {
     try {
       setLoading(true);
       setError("");
+
       await verifyOtpApi(email, code);
+
       sessionStorage.removeItem("foundryOtpEmail");
-      navigate("/home", { replace: true });
+
+      navigate("/auth/callback", {
+        replace: true,
+      });
     } catch (err) {
       const data = err.response?.data;
+
       const message =
         data?.message ||
         data?.error ||
         data?.errors?.code?.[0] ||
-        data?.errors?.otp?.[0] ||
-        (err instanceof Error ? err.message : "") ||
         "Invalid code. Please try again.";
-      setError(message);
-      console.error("OTP verification failed:", err.response?.status, data || err);
 
+      setError(message);
+
+      console.error(
+        "OTP verification failed:",
+        err.response?.status,
+        data || err,
+      );
     } finally {
       setLoading(false);
     }
