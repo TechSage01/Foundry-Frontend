@@ -10,7 +10,7 @@ import { React, useEffect, useState } from "react";
 import { useSearchParams } from 'react-router-dom'
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://foundry-00kt.onrender.com";
+  import.meta.env.VITE_API_URL || "https://foundry-backend-ux47.onrender.com";
 
 function SignIn() {
   const [email, setEmail] = useState("");
