@@ -1,12 +1,15 @@
 # Foundry
 
-> **Build. Document. Connect. Discover.**
-
 Foundry is a platform for people who build things.
 
 It gives builders a place to create projects, document the journey from idea to launch, share progress, connect with other builders, discover communities, and find opportunities such as jobs, internships, hackathons, freelance work, and collaborations.
 
 Foundry focuses on **the journey behind a project**, not just the finished product.
+
+## A look Inside 
+<img width="950" height="439" alt="image" src="https://github.com/user-attachments/assets/1068a356-c723-4433-bb1c-2bcc171989b2" />
+<img width="958" height="441" alt="image" src="https://github.com/user-attachments/assets/cfbe7f4f-fb13-40a5-821d-631f35de396e" />
+<img width="943" height="436" alt="image" src="https://github.com/user-attachments/assets/680ec0d9-d596-479c-8d9a-6c3e37a5c3f3" />
 
 ## Demo
 
