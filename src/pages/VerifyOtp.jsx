@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import { requestOtpApi, verifyOtpApi } from "../services/auth";
 import foundryLogo from "../assets/foundry-logo.png";
-const API_URL = import.meta.env.VITE_API_URL;
 const VerifyOtp = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email || "alex@example.com";
+  const email = location.state?.email || sessionStorage.getItem("foundryOtpEmail") || "";
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(45);
   const [loading, setLoading] = useState(false);
@@ -58,7 +57,7 @@ const VerifyOtp = () => {
     if (timer > 0) return;
     try {
       setError("");
-      await axios.post(`${API_URL}/api/auth/resend-otp`, { email });
+      await requestOtpApi(email);
       setTimer(60);
     } catch (err) {
       setError("Failed to resend code. Please try again.");
@@ -79,15 +78,9 @@ const VerifyOtp = () => {
     try {
       setLoading(true);
       setError("");
-      const response = await axios.post(
-        `${API_URL}/api/auth/verify-otp`,
-        { email, code },
-        { withCredentials: true },
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        navigate("/discover");
-      }
+      await verifyOtpApi(email, code);
+      sessionStorage.removeItem("foundryOtpEmail");
+      navigate("/home", { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.message || "Invalid code. Please try again.",

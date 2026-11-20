@@ -1,6 +1,16 @@
 import api from './api'
 import { disconnectSocket } from './socket'
 
+export const requestOtpApi = async (email) => {
+    const response = await api.post('/api/auth/request-otp', { email });
+    return response.data?.data || response.data;
+};
+
+export const verifyOtpApi = async (email, code) => {
+    const response = await api.post('/api/auth/verify-otp', { email, code });
+    return response.data?.data || response.data;
+};
+
 export const logoutApi = () => {
     disconnectSocket();
 

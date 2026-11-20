@@ -15,6 +15,8 @@ const NO_REFRESH = [
   'api/auth/login',
   'api/auth/register',
   'api/auth/verify',
+  'api/auth/request-otp',
+  'api/auth/verify-otp',
 ];
 let refreshPromise = null;
 api.interceptors.response.use(
