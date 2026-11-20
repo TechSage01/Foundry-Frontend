@@ -27,9 +27,9 @@ api.interceptors.response.use(
     const url = original?.url || '';
     
     if (
-      status !== 401 ||
-      !original._retry || 
-      NO_REFRESH.some((p) => url.includes(p))
+    status !== 401 ||
+    original._retry ||
+    NO_REFRESH.some((p) => url.includes(p))
     ){
       return Promise.reject(error);
     }
