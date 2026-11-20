@@ -24,6 +24,8 @@ import {
   Trash2,
   //   Link,
   ChevronRight,
+  Building2,
+  CalendarDays,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -1081,81 +1083,135 @@ put("location", formData.location);
     user?.name || user?.username || "Builder",
   )}&background=A04622&color=fff`;
 
+  const isDefaultLogo = (url) =>
+    typeof url === "string" && /foundry[_-]?logo/i.test(url);
+  const rawCover =
+    coverPreview ||
+    user?.cover_image ||
+    user?.cover_image_url ||
+    user?.cover_url ||
+    user?.cover ||
+    null;
+  const coverSrc = isDefaultLogo(rawCover) ? null : rawCover;
+  const rawAvatar = avatarPreview || user?.avatar_url || user?.avatar || null;
+  const avatarSrc = rawAvatar || fallbackAvatar;
+  const displayName =
+    user?.name || user?.full_name || user?.username || "Anonymous Builder";
+  const headline = user?.headline || "";
+  const projectCount = userProjects?.length || 0;
+
+  const monthYear = (value) => {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime())
+      ? ""
+      : d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  };
+  const durationText = (start, end) => {
+    const a = new Date(start);
+    const b = end ? new Date(end) : new Date();
+    if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return "";
+    const months = Math.max(
+      1,
+      (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()),
+    );
+    const y = Math.floor(months / 12);
+    const m = months % 12;
+    return [y ? `${y} yr${y > 1 ? "s" : ""}` : "", m ? `${m} mo` : ""]
+      .filter(Boolean)
+      .join(" ");
+  };
+
+  const shareProfile = async () => {
+    const url = `${window.location.origin}/profile/${user?.username || ""}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: displayName, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        showToast("success", "Profile link copied.");
+      }
+    } catch {
+      /* share dialog closed */
+    }
+  };
+
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {/* HERO HEADER */}
-        <section className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
-          <div className="relative h-52 md:h-64 bg-stone-100">
-            <img
-              src={
-                coverPreview ||
-                user?.cover_image ||
-                user?.cover_url ||
-                user?.cover ||
-                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe"
-              }
-              alt="Cover"
-              className="w-full h-full object-cover"
-            />
-            <button
-              type="button"
-              onClick={() => coverInputRef.current?.click()}
-              aria-label="Change cover image"
-              className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-black/65 bg-black/50 font-semibold text-xs backdrop-blur-sm active:scale-95 rounded-xl transition cursor-pointer"
-            >
-              <Camera size={14} />
-              <span>Change cover</span>
-            </button>
-            <input
-              type="file"
-              ref={coverInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => handleQuickImageSelect(e, "cover")}
-            />
-            <div className="absolute -bottom-12 left-6 ring-4 ring-white rounded-2xl overflow-hidden bg-white shadow-md">
-              <img
-                src={
-                  avatarPreview ||
-                  user?.avatar_url ||
-                  user?.avatar ||
-                  fallbackAvatar
-                }
-                alt={user?.name || user?.username}
-                className="w-24 h-24 md:w-28 md:h-28 object-cover"
-                onError={(e) => {
-                  e.target.src = fallbackAvatar;
-                }}
-              />
+      <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
+        {/* main column */}
+        <div className="space-y-4 min-w-0">
+          {/* TOP CARD */}
+          <section className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
+            <div className="relative h-36 md:h-52 bg-stone-100">
+              {coverSrc && (
+                <img
+                  src={coverSrc}
+                  alt="Cover"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
               <button
                 type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                aria-label="Change profile picture"
-                title="Change Profile Picture"
-                className="absolute bottom-1.5 right-1.5 flex items-center gap-1.5 px-3 py-1.5 text-white bg-[#A04622] hover:bg-[#85381a] font-semibold text-xs backdrop-blur-sm active:scale-95 rounded-xl transition cursor-pointer"
+                onClick={() => coverInputRef.current?.click()}
+                aria-label="Change cover image"
+                className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-black/65 bg-black/50 font-semibold text-xs backdrop-blur-sm active:scale-95 rounded-full transition cursor-pointer"
               >
                 <Camera size={14} />
-                <span>Change Profile</span>
+                <span>Change cover</span>
               </button>
               <input
                 type="file"
-                ref={avatarInputRef}
+                ref={coverInputRef}
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => handleQuickImageSelect(e, "avatar")}
+                onChange={(e) => handleQuickImageSelect(e, "cover")}
               />
             </div>
-          </div>
 
-          <div className="pt-16 pb-6 px-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div className="space-y-1">
+            <div className="px-6 pb-6">
+              <div className="relative -mt-14 md:-mt-16 mb-3 w-28 h-28 md:w-32 md:h-32">
+                <img
+                  src={avatarSrc}
+                  alt={displayName}
+                  className={`w-full h-full rounded-full ring-4 ring-white bg-white shadow-md ${
+                    isDefaultLogo(rawAvatar) ? "object-contain p-3" : "object-cover"
+                  }`}
+                  onLoad={(e) => {
+                    const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+                    if (w && h && (w / h > 1.35 || w / h < 0.74)) {
+                      e.currentTarget.classList.remove("object-cover");
+                      e.currentTarget.classList.add("object-contain", "p-3");
+                    }
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = fallbackAvatar;
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  aria-label="Change profile picture"
+                  title="Change profile picture"
+                  className="absolute bottom-1 right-1 w-9 h-9 flex items-center justify-center text-white bg-[#A04622] hover:bg-[#85381a] ring-2 ring-white rounded-full transition active:scale-95 cursor-pointer"
+                >
+                  <Camera size={16} />
+                </button>
+                <input
+                  type="file"
+                  ref={avatarInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleQuickImageSelect(e, "avatar")}
+                />
+              </div>
+
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl font-bold text-stone-900 tracking-tight">
-                  {user?.name ||
-                    user?.full_name ||
-                    user?.username ||
-                    "Anonymous Builder"}
+                  {displayName}
                 </h1>
                 {user?.badge && (
                   <span className="px-2.5 py-0.5 bg-[#FDF4F0] text-[#A04622] border border-[#f6e2d9] rounded-full text-xs font-semibold">
@@ -1163,248 +1219,187 @@ put("location", formData.location);
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3 text-sm text-stone-500 font-medium flex-wrap">
-                <span>
-                  @{user?.username || "builder"}{" "}
-                  {user?.bio ? `· ${user.bio}` : ""}
-                </span>
+              {headline && (
+                <p className="text-base text-stone-700 mt-0.5">{headline}</p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-stone-500">
+                <span>@{user?.username || "builder"}</span>
                 {user?.location && (
-                  <span className="flex items-center gap-1 text-stone-600 bg-stone-100 px-2 py-0.5 rounded-md text-xs">
-                    <MapPin size={13} className="text-[#A04622]" />
+                  <span className="flex items-center gap-1">
+                    <MapPin size={14} />
                     {user.location}
                   </span>
                 )}
+                {user?.joined_at && (
+                  <span className="flex items-center gap-1">
+                    <CalendarDays size={14} />
+                    Joined {user.joined_at}
+                  </span>
+                )}
               </div>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCreateChooserOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 border-2 border-[#A04622] text-[#A04622] hover:bg-[#FDF4F0] rounded-xl text-sm font-semibold transition-all active:scale-95 cursor-pointer"
-              >
-                <Plus size={16} />
-                <span>Create</span>
-              </button>
-              <button
-                onClick={handleOpenEdit}
-                className="flex items-center gap-2 px-4 py-2.5 bg-[#A04622] hover:bg-[#85381a] text-white rounded-xl text-sm font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
-              >
-                <Edit2 size={16} />
-                <span>Edit Profile</span>
-              </button>
-
-              <button
-                className="p-2.5 text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/70 rounded-xl transition cursor-pointer"
-                aria-label="Share profile"
-              >
-                <Share2 size={18} />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* STATS SECTION */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3.5 p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
-            <div className="p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl">
-              <Folder size={20} />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-stone-500 font-medium">
-                Active Projects
-              </span>
-              <strong className="text-xl font-bold text-stone-900">
-                {userProjects?.length || user?.stats?.activeProjects || 0}
-              </strong>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => openFollowModal("followers")}
-            className="cursor-pointer flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm  text-left hover:border-[#A04622]/40  hover:shadow-md transition active:scale-[0.98]"
-          >
-            <div
-              className="p-2.5 sm:p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl
-              shrink-0"
-            >
-              <Users size={20} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs text-stone-500 font-medium leading-tight">
-                Followers
-              </span>
-              <strong className="text-xl font-bold text-stone-900">
-                {followersCount}
-              </strong>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => openFollowModal("following")}
-            className="cursor-pointer flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm  text-left hover:border-[#A04622]/40  hover:shadow-md transition active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-3.5 p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
-              <div className="p-2.5 sm:p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl">
-                <UserRoundCheck size={20} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs text-stone-500 font-medium leading-tight">
-                  Following
-                </span>
-                <strong className="text-xl font-bold text-stone-900">
-                  {followingCount}
-                </strong>
-              </div>
-            </div>
-          </button>
-
-          {/* <div className="flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
-            <div className="p-2.5 sm:p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl">
-              <Flame size={20} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs text-stone-500 font-medium leading-tight">
-                Builder Score
-              </span>
-              <strong className="text-xl font-bold text-stone-900">
-                {user?.stats?.builderScore || 0}
-              </strong>
-            </div>
-          </div> */}
-          <div className="flex items-center gap-3 p-3 sm:p-4 bg-white rounded-2xl border border-stone-200/80 shadow-sm">
-            <div className="p-2.5 sm:p-3 bg-[#FDF4F0] text-[#A04622] rounded-xl shrink-0">
-              <Flame size={20} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs text-stone-500 font-medium leading-tight">
-                Total Likes
-              </span>
-              <strong className="text-xl font-bold text-stone-900">
-                {totalLikes}
-              </strong>
-            </div>
-          </div>
-        </section>
-
-        {/* MAIN CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-2 space-y-6">
-            <section className="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-stone-900 font-bold text-base">
-                  <BriefcaseBusiness size={18} className="text-[#A04622]" />
-                  <h2>About Builder</h2>
-                </div>
+              <p className="mt-2 text-sm font-semibold text-[#A04622] flex flex-wrap items-center gap-x-2">
                 <button
-                  onClick={handleOpenEditWithConfirm}
-                  className="p-1.5 text-stone-400 hover:text-[#A04622] hover:bg-stone-50 rounded-lg transition cursor-pointer"
-                  title="Edit About Section"
+                  type="button"
+                  onClick={() => openFollowModal("followers")}
+                  className="hover:underline cursor-pointer"
                 >
-                  <Edit2 size={16} />
+                  {followersCount} {followersCount === 1 ? "follower" : "followers"}
                 </button>
-              </div>
-              <p className="text-stone-600 text-sm leading-relaxed">
-                {user?.about || user?.bio || "No bio added yet."}
+                <span className="text-stone-300">•</span>
+                <button
+                  type="button"
+                  onClick={() => openFollowModal("following")}
+                  className="hover:underline cursor-pointer"
+                >
+                  {followingCount} following
+                </button>
+                <span className="text-stone-300">•</span>
+                <span>
+                  {projectCount} {projectCount === 1 ? "project" : "projects"}
+                </span>
+                <span className="text-stone-300">•</span>
+                <span>{totalLikes} likes</span>
               </p>
-            </section>
 
-            {/* JOURNEY TIMELINE */}
-            {/* JOURNEY TIMELINE */}
-            <section className="bg-[#FAF8F5] p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#7C2D12] font-bold text-lg font-serif">
-                  <TrendingUp size={20} className="text-[#A04622]" />
-                  <h2>Journey Timeline</h2>
-                </div>
+              <div className="flex flex-wrap items-center gap-2 mt-4">
                 <button
                   onClick={handleOpenEdit}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#A04622] hover:bg-[#FDF4F0] border border-[#f6e2d9] rounded-lg transition cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-[#A04622] hover:bg-[#85381a] text-white rounded-full text-sm font-semibold transition active:scale-95 cursor-pointer"
                 >
-                  <Plus size={14} />
-                  <span>Add Experience</span>
+                  <Edit2 size={15} />
+                  Edit profile
+                </button>
+                <button
+                  onClick={() => setCreateChooserOpen(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2 border border-[#A04622] text-[#A04622] hover:bg-[#FDF4F0] rounded-full text-sm font-semibold transition active:scale-95 cursor-pointer"
+                >
+                  <Plus size={15} />
+                  Create
+                </button>
+                <button
+                  onClick={shareProfile}
+                  aria-label="Share profile"
+                  title="Share profile"
+                  className="w-10 h-10 flex items-center justify-center text-stone-600 hover:text-stone-900 border border-stone-300 hover:bg-stone-50 rounded-full transition cursor-pointer"
+                >
+                  <Share2 size={16} />
                 </button>
               </div>
+            </div>
+          </section>
 
-              {timeline && timeline.length > 0 ? (
-                <div className="relative pl-6 space-y-8 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-stone-200">
-                  {timeline.map((item, index) => (
-                    <div
-                      key={item.id || item._id || index}
-                      className="relative space-y-1.5 group"
-                    >
-                      <span
-                        className={`absolute -left-[23.5px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-[#FAF8F5] ${
-                          index === 0 ? "bg-[#A04622]" : "bg-stone-400"
-                        }`}
-                      />
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-semibold text-stone-400 uppercase tracking-wide">
-                            {item.start_date
-                              ? `${new Date(item.start_date).getFullYear()} — ${
-                                  item.is_current
-                                    ? "PRESENT"
-                                    : item.end_date
-                                      ? new Date(item.end_date).getFullYear()
-                                      : "PRESENT"
-                                }`
-                              : item.period || "PRESENT"}
-                          </span>
-                          {item.employment_type && (
-                            <span className="px-2 py-0.5 bg-stone-200/60 text-stone-700 text-[10px] font-semibold rounded-md">
-                              {item.employment_type}
-                            </span>
-                          )}
+          {/* ABOUT */}
+          <section className="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-stone-900">About</h2>
+              <button
+                onClick={handleOpenEditWithConfirm}
+                className="p-2 text-stone-400 hover:text-[#A04622] hover:bg-stone-50 rounded-full transition cursor-pointer"
+                title="Edit about"
+                aria-label="Edit about"
+              >
+                <Edit2 size={16} />
+              </button>
+            </div>
+            <p className="text-sm text-stone-600 leading-relaxed whitespace-pre-line">
+              {user?.about ||
+                user?.bio ||
+                "No bio added yet. Use the pencil to tell people what you build."}
+            </p>
+          </section>
+
+          {/* EXPERIENCE */}
+          <section className="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-stone-900">Experience</h2>
+              <button
+                onClick={handleOpenEdit}
+                className="p-2 text-stone-500 hover:text-[#A04622] hover:bg-stone-50 rounded-full transition cursor-pointer"
+                title="Add experience"
+                aria-label="Add experience"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+
+            {timeline && timeline.length > 0 ? (
+              <div className="space-y-6">
+                {timeline.map((item, index) => (
+                  <div key={item.id || item._id || index} className="flex gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-[#F5F0EB] text-[#A04622] flex items-center justify-center shrink-0">
+                      <Building2 size={22} />
+                    </div>
+                    <div className="min-w-0 flex-1 pb-6 border-b border-stone-100 last:border-0 last:pb-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-semibold text-stone-900">
+                            {item.role || item.title}
+                          </h3>
+                          <p className="text-sm text-stone-700">
+                            {item.company_name || item.company}
+                            {item.employment_type && (
+                              <span className="text-stone-500"> · {item.employment_type}</span>
+                            )}
+                          </p>
                         </div>
-
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={() => handleEditTimelineItem(item)}
-                            className="p-1.5 text-stone-400 hover:text-[#A04622] hover:bg-white rounded-lg transition cursor-pointer"
-                            title="Edit Experience"
+                            className="p-1.5 text-stone-400 hover:text-[#A04622] hover:bg-stone-50 rounded-full transition cursor-pointer"
+                            title="Edit experience"
+                            aria-label="Edit experience"
                           >
                             <Edit2 size={14} />
                           </button>
                           <button
                             onClick={() => handleDeleteExperience(index, item)}
-                            className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-white rounded-lg transition cursor-pointer"
-                            title="Delete Experience"
+                            className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition cursor-pointer"
+                            title="Delete experience"
+                            aria-label="Delete experience"
                           >
                             <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
-
-                      <h3 className="text-base font-semibold text-stone-900">
-                        {item.role || item.title}{" "}
-                        {item.company_name && (
-                          <span className="font-normal text-stone-600">
-                            at {item.company_name}
-                          </span>
-                        )}
-                      </h3>
-
+                      {item.start_date ? (
+                        <p className="text-xs text-stone-500 mt-0.5">
+                          {monthYear(item.start_date)} –{" "}
+                          {item.is_current || !item.end_date
+                            ? "Present"
+                            : monthYear(item.end_date)}
+                          {durationText(
+                            item.start_date,
+                            item.is_current ? null : item.end_date,
+                          ) &&
+                            ` · ${durationText(item.start_date, item.is_current ? null : item.end_date)}`}
+                        </p>
+                      ) : (
+                        item.period && (
+                          <p className="text-xs text-stone-500 mt-0.5">{item.period}</p>
+                        )
+                      )}
+                      {item.location && (
+                        <p className="text-xs text-stone-500">{item.location}</p>
+                      )}
                       {item.description && (
-                        <p className="text-xs text-stone-500 leading-relaxed max-w-xl">
+                        <p className="text-sm text-stone-600 leading-relaxed mt-2 whitespace-pre-line">
                           {item.description}
                         </p>
                       )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-stone-400 italic">
-                  No timeline experience entries listed yet. Click "Add
-                  Experience" to add work experience.
-                </p>
-              )}
-            </section>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-stone-400">
+                No experience yet. Use + to add your first role.
+              </p>
+            )}
+          </section>
 
-            {/* CONTENT TABS */}
-            <section className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
-              {/* ...unchanged, keep what's already there... */}
-            </section>
-            {/* CONTENT TABS */}
+          {/* CONTENT TABS */}
             <section className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
               <div className="flex overflow-x-auto border-b border-stone-100">
                 {[
@@ -1610,7 +1605,7 @@ put("location", formData.location);
               </div>
             </section>
 
-            {/* SKILLS & TECH STACK */}
+          {/* SKILLS */}
             {Array.isArray(user?.skills) && user.skills.length > 0 && (
               <section className="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-3">
                 <div className="flex items-center gap-2 text-stone-900 font-bold text-base">
@@ -1629,19 +1624,45 @@ put("location", formData.location);
                 </div>
               </section>
             )}
-          </div>
+        </div>
 
-          {/* RIGHT COLUMN: SHOWCASE SIDEBAR */}
-          <aside className="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-4">
+        {/* right rail */}
+        <aside className="space-y-4 lg:sticky lg:top-20">
+          <section className="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-sm space-y-3">
+            <h2 className="text-sm font-bold text-stone-900">Your profile</h2>
+            <dl className="text-sm space-y-2">
+              <div className="flex justify-between gap-3">
+                <dt className="text-stone-500">Username</dt>
+                <dd className="font-medium text-stone-800 truncate">@{user?.username}</dd>
+              </div>
+              {user?.location && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-stone-500">Location</dt>
+                  <dd className="font-medium text-stone-800 truncate">{user.location}</dd>
+                </div>
+              )}
+              <div className="flex justify-between gap-3">
+                <dt className="text-stone-500">Total likes</dt>
+                <dd className="font-medium text-stone-800">{totalLikes}</dd>
+              </div>
+            </dl>
+            {user?.username && (
+              <Link
+                to={`/profile/${user.username}`}
+                className="block text-xs font-semibold text-[#A04622] hover:underline"
+              >
+                See how others view your profile
+              </Link>
+            )}
+          </section>
+
+          <section className="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-              <h2 className="font-bold text-stone-900 text-base">
-                Active Showcase
-              </h2>
+              <h2 className="font-bold text-stone-900 text-sm">Active showcase</h2>
               <span className="text-xs font-medium text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">
-                {userProjects?.length || 0} modules
+                {projectCount} modules
               </span>
             </div>
-
             {userProjects && userProjects.length > 0 ? (
               <div className="space-y-4">
                 {userProjects.slice(0, 3).map((project, index) => {
@@ -1690,8 +1711,8 @@ put("location", formData.location);
                 No active projects showcased yet.
               </p>
             )}
-          </aside>
-        </div>
+          </section>
+        </aside>
       </div>
 
       {/* EDIT PROFILE MODAL */}

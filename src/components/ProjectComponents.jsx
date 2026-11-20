@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
-  Star,
+  Heart,
   Bookmark,
   Share2,
   Clock,
@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import api from "../services/api";
+import { findBuilders } from "../services/search";
+import { fetchProjectLikesApi, likeStateOf, toggleProjectLikeApi } from "../services/projectLikes";
 const formatPostTime = (dateInput) => {
   if (!dateInput) return { relative: "Recently", exact: "" };
   const date = new Date(dateInput);
@@ -58,10 +60,9 @@ export const ProjectComponents = ({
   api,
 }) => {
   const [project, setProject] = useState(initialProject);
-  const [starred, setStarred] = useState(false);
-  const [starCount, setStarCount] = useState(
-    project.stars || project.star_count || 0,
-  );
+  const [starred, setStarred] = useState(likeStateOf(initialProject).liked);
+  const [starCount, setStarCount] = useState(likeStateOf(initialProject).count);
+  const [likeBusy, setLikeBusy] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
@@ -136,6 +137,9 @@ export const ProjectComponents = ({
     .toLowerCase()
     .trim();
 
+  // the API may only send an id for the author; if that is the viewer, use the viewer's own details
+  const viewerIsAuthor = Boolean(currentUserId && authorId && currentUserId === authorId);
+
   // Resolve Author Name display
   const authorName =
     authorObj?.full_name ||
@@ -145,6 +149,9 @@ export const ProjectComponents = ({
     project?.author_name ||
     project?.authorName ||
     project?.username ||
+    (viewerIsAuthor
+      ? currentUser?.full_name || currentUser?.name || currentUser?.username
+      : "") ||
     "Developer";
 
   const authorAvatar =
@@ -153,11 +160,20 @@ export const ProjectComponents = ({
         authorObj?.avatar_url ||
         authorObj?.avatar ||
         authorObj?.image
-      : project.avatar || project.author_avatar;
+      : project.avatar ||
+        project.author_avatar ||
+        (viewerIsAuthor ? currentUser?.avatar_url || currentUser?.avatar : undefined);
 
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
     authorName,
   )}&background=A04622&color=fff`;
+
+  // teammates tagged on the project (objects with names, or just ids)
+  const rawTeam =
+    project?.team || project?.teammates || project?.members || project?.collaborators || [];
+  const teamList = (Array.isArray(rawTeam) ? rawTeam : []).map((m) =>
+    typeof m === "object" && m !== null ? m : { id: m },
+  );
 
   const matchesId = Boolean(
     currentUserId && authorId && String(currentUserId) === String(authorId),
@@ -189,7 +205,8 @@ export const ProjectComponents = ({
       demo_url: initialProject.demo_url || initialProject.demoUrl || "",
       github_url: initialProject.github_url || initialProject.githubUrl || "",
     });
-    setStarCount(initialProject.stars || initialProject.star_count || 0);
+    setStarred(likeStateOf(initialProject).liked);
+    setStarCount(likeStateOf(initialProject).count);
   }, [initialProject]);
 
   // Project Update Handler
@@ -382,18 +399,52 @@ export const ProjectComponents = ({
     }
   };
 
-  const handleStarToggle = async () => {
-    const previousStarred = starred;
-    const previousStarCount = starCount;
-    setStarred(!previousStarred);
-    setStarCount((prev) => (previousStarred ? prev - 1 : prev + 1));
-
+  // fresh like count (and whether you liked it) when the page opens
+  useEffect(() => {
+    const id = initialProject._id || initialProject.id;
+    if (!id) return;
+    let alive = true;
     try {
-      const res = await api.post(`/api/projects/${projectId}/likes`);
+      const saved = JSON.parse(localStorage.getItem("foundry_liked_projects") || "[]");
+      if (saved.map(String).includes(String(id))) setStarred(true);
+    } catch {}
+    fetchProjectLikesApi(id)
+      .then((r) => {
+        if (!alive) return;
+        if (r.count !== undefined) setStarCount(r.count);
+        if (r.liked !== undefined) setStarred(r.liked);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [initialProject]);
+
+  const handleStarToggle = async () => {
+    if (likeBusy) return;
+    const wasLiked = starred;
+    const wasCount = starCount;
+    setLikeBusy(true);
+    setStarred(!wasLiked);
+    setStarCount(Math.max(0, wasCount + (wasLiked ? -1 : 1)));
+    try {
+      const r = await toggleProjectLikeApi(projectId);
+      // trust the server when it tells us the real state
+      const nowLiked = r.liked !== undefined ? r.liked : !wasLiked;
+      setStarred(nowLiked);
+      try {
+        const set = new Set(JSON.parse(localStorage.getItem("foundry_liked_projects") || "[]").map(String));
+        if (nowLiked) set.add(String(projectId));
+        else set.delete(String(projectId));
+        localStorage.setItem("foundry_liked_projects", JSON.stringify([...set]));
+      } catch {}
+      if (r.count !== undefined) setStarCount(r.count);
     } catch (err) {
-      console.error("Failed to toggle like", err);
-      setStarred(previousStarred);
-      setStarCount(previousStarCount);
+      console.error("Failed to toggle like", err.response?.status, err.response?.data);
+      setStarred(wasLiked);
+      setStarCount(wasCount);
+    } finally {
+      setLikeBusy(false);
     }
   };
 
@@ -414,16 +465,21 @@ export const ProjectComponents = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 text-[#1C1917] pb-12 font-sans">
+    <div className="w-full px-4 sm:px-6 space-y-5 text-[#1C1917] pb-12 font-sans">
       {/* Top Header Navigation & Author Controls */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-xs font-semibold text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Projects</span>
-        </button>
+      <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 h-14 bg-white/85 backdrop-blur border-b border-stone-200/70 flex items-center justify-between">
+        <div className="flex items-center gap-5 min-w-0">
+          <button
+            onClick={onBack}
+            aria-label="Back to projects"
+            className="w-9 h-9 -ml-2 rounded-full flex items-center justify-center text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer shrink-0"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div className="min-w-0">
+            <p className="text-lg font-extrabold text-stone-900 leading-tight truncate">Project</p>
+          </div>
+        </div>
 
         {/* RESTRICTED: Author Action Controls */}
         {isAuthor && (
@@ -463,9 +519,9 @@ export const ProjectComponents = ({
       </div>
 
       {/* Main Banner Header Card */}
-      <div className="bg-[#FAF8F5] rounded-3xl p-6 border border-stone-200/80 shadow-xs flex flex-col md:flex-row md:items-start justify-between gap-6">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-stone-200 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6">
         <div className="flex items-start gap-4 flex-1">
-          <div className="w-16 h-16 rounded-2xl bg-[#A04622] text-white flex items-center justify-center font-bold text-xl border border-stone-200/60 shadow-xs shrink-0 overflow-hidden">
+          <div className="w-16 h-16 rounded-2xl bg-[#A04622] text-white flex items-center justify-center font-bold text-xl border border-stone-200/60 shrink-0 overflow-hidden">
             {authorAvatar ? (
               <img
                 src={authorAvatar}
@@ -618,14 +674,16 @@ export const ProjectComponents = ({
         <div className="flex items-center gap-2 shrink-0 self-start md:self-auto">
           <button
             onClick={handleStarToggle}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
+            disabled={likeBusy}
+            aria-pressed={starred}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all border ${
               starred
-                ? "bg-[#A04622] text-white shadow-xs"
-                : "bg-[#A04622] text-white hover:bg-[#8A3A1B]"
+                ? "bg-[#f91880]/10 border-[#f91880]/30 text-[#f91880]"
+                : "bg-white border-stone-300 text-stone-700 hover:bg-stone-50"
             }`}
           >
-            <Star size={14} className={starred ? "fill-white" : ""} />
-            <span>Star {starCount}</span>
+            <Heart size={15} className={starred ? "fill-[#f91880] text-[#f91880]" : ""} />
+            <span>{starred ? "Liked" : "Like"} · {starCount}</span>
           </button>
 
           <button
@@ -656,7 +714,7 @@ export const ProjectComponents = ({
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-stone-200 flex items-center gap-6 text-xs font-semibold text-stone-500 overflow-x-auto">
+      <div className="border-b border-stone-200 flex items-center text-sm font-medium text-stone-500 overflow-x-auto [scrollbar-width:none]">
         {[
           "Overview",
           "Journey & Milestones",
@@ -666,15 +724,15 @@ export const ProjectComponents = ({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-3 px-1 transition-colors relative cursor-pointer whitespace-nowrap ${
+            className={`py-3.5 px-4 transition-colors relative cursor-pointer whitespace-nowrap hover:bg-stone-100 ${
               activeTab === tab
-                ? "text-[#A04622] font-bold"
+                ? "text-stone-900 font-bold"
                 : "hover:text-stone-900"
             }`}
           >
             {tab}
             {activeTab === tab && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#A04622] rounded-full" />
+              <span className="absolute bottom-0 left-3 right-3 h-1 bg-[#A04622] rounded-full" />
             )}
           </button>
         ))}
@@ -685,7 +743,7 @@ export const ProjectComponents = ({
         <div className="lg:col-span-8 space-y-6">
           {activeTab === "Overview" && (
             <>
-              <div className="bg-stone-900 rounded-3xl overflow-hidden border border-stone-200/80 shadow-xs relative group">
+              <div className="bg-stone-900 rounded-2xl overflow-hidden border border-stone-200/80 relative group">
                 <img
                   src={
                     project.cover_image_url ||
@@ -708,7 +766,7 @@ export const ProjectComponents = ({
                 )}
               </div>
 
-              <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-stone-400">
                   About this Project
                 </h2>
@@ -723,15 +781,11 @@ export const ProjectComponents = ({
 
           {(activeTab === "Overview" ||
             activeTab === "Journey & Milestones") && (
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-stone-900">
                   Interactive Journey & Roadmap
                 </h2>
-                <p className="text-[10px] text-stone-400">
-                  debug: projectId={String(projectId)} isAuthor=
-                  {String(isAuthor)} phases={phases.length}
-                </p>
 
                 {/* RESTRICTED: Only Author can add Roadmap Phases */}
                 {isAuthor && (
@@ -858,7 +912,7 @@ export const ProjectComponents = ({
           )}
 
           {(activeTab === "Overview" || activeTab === "Updates") && (
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-stone-900">
                   Latest Project Updates
@@ -947,7 +1001,7 @@ export const ProjectComponents = ({
           )}
 
           {activeTab === "Resources & Code" && (
-            <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
               <h2 className="text-sm font-bold text-stone-900">
                 Resources & Code Repositories
               </h2>
@@ -1006,7 +1060,7 @@ export const ProjectComponents = ({
 
         {/* Sidebar Info */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
             <h2 className="text-xs font-bold uppercase tracking-wider text-stone-400">
               Project Author
             </h2>
@@ -1026,6 +1080,50 @@ export const ProjectComponents = ({
               </div>
             </div>
           </div>
+
+          {teamList.length > 0 && (
+            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 space-y-4">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-stone-400">
+                Team ({teamList.length})
+              </h2>
+              <div className="space-y-3">
+                {teamList.map((m, i) => {
+                  const name = m.full_name || m.name || m.username || "Teammate";
+                  const username = m.username || m.user_name;
+                  const avatar =
+                    m.avatar_url ||
+                    m.avatar ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=A04622&color=fff`;
+                  const row = (
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={avatar}
+                        alt={name}
+                        className="w-10 h-10 rounded-full object-cover border border-stone-200"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=A04622&color=fff`;
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-stone-900 truncate">{name}</p>
+                        <p className="text-[10px] text-stone-500 truncate">
+                          {username ? `@${username}` : "Team member"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                  return username ? (
+                    <a key={m.id || m._id || username || i} href={`/profile/${username}`} className="block hover:opacity-80">
+                      {row}
+                    </a>
+                  ) : (
+                    <div key={m.id || m._id || i}>{row}</div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1068,18 +1166,16 @@ export const SubmitProjectModal = ({ onClose, onSubmit, isSubmitting }) => {
 
   const handleSearchUsers = async (query) => {
     setSearchQuery(query);
-    if (!query.trim()) {
+    // "@" or "#" alone is not a name yet
+    if (!query.replace(/^[@#]+/, "").trim()) {
       setSearchResults([]);
       return;
     }
 
     try {
       setIsSearching(true);
-      const res = await api.get(
-        `/api/users/search?q=${encodeURIComponent(query)}`,
-      );
-      const data = res.data?.users || res.data?.data || res.data || [];
-      setSearchResults(Array.isArray(data) ? data : []);
+      const found = await findBuilders(query);
+      setSearchResults(found);
     } catch (err) {
       console.error("Error searching builders:", err);
       setSearchResults([]);
@@ -1257,7 +1353,7 @@ export const SubmitProjectModal = ({ onClose, onSubmit, isSubmitting }) => {
                         >
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded-full bg-stone-200 text-[10px] font-bold flex items-center justify-center text-stone-700">
-                              {user.name ? user.name[0] : "U"}
+                              {(user.name || user.username || "U")[0].toUpperCase()}
                             </div>
                             <div>
                               <p className="text-xs font-semibold text-stone-800">
@@ -1271,6 +1367,10 @@ export const SubmitProjectModal = ({ onClose, onSubmit, isSubmitting }) => {
                           <UserPlus size={14} className="text-[#A04622]" />
                         </div>
                       ))
+                    ) : !searchQuery.replace(/^[@#]+/, "").trim() ? (
+                      <p className="p-3 text-[11px] text-stone-400">
+                        Keep typing a username or name...
+                      </p>
                     ) : (
                       <p className="p-3 text-[11px] text-stone-400">
                         No builders found

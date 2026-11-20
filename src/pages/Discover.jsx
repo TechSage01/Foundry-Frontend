@@ -10,10 +10,11 @@ import {
   ArrowRight,
   Loader2,
   FolderOpen,
+  Heart,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { INITIAL_PROJECTS } from "../data/projectData";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { likeStateOf, toggleProjectLikeApi, fetchProjectLikesApi } from "../services/projectLikes";
 import {
   ProjectComponents,
   SubmitProjectModal,
@@ -54,20 +55,143 @@ const toArray = (raw)=> {
   const candidate = raw?.projects ?? raw?.data?.projects ?? raw?.data ?? [];
   return Array.isArray(candidate) ? candidate : [];
 }
+
+const toCommunity = (c) => {
+  const name = c.name || c.title || "Community";
+  return {
+    id: c.id || c._id,
+    slug: c.slug,
+    name,
+    badge: name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase())
+      .join(""),
+    description: c.description || "",
+    members: c.builders_count ?? c.members_count ?? c.member_count ?? 0,
+    joined: Boolean(c.is_joined ?? c.is_member ?? c.isMember ?? false),
+  };
+};
+
+const timeAgo = (value) => {
+  const d = new Date(value);
+  if (!value || Number.isNaN(d.getTime())) return "Recently updated";
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days < 1) return "Updated today";
+  if (days < 30) return `Updated ${days}d ago`;
+  return `Updated ${d.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`;
+};
+
+function LikeButton({ project, className = "" }) {
+  const base = likeStateOf(project);
+  const [liked, setLiked] = useState(base.liked);
+  const [count, setCount] = useState(base.count);
+  const [busy, setBusy] = useState(false);
+  const id = project._id || project.id;
+  const LS_KEY = "foundry_liked_projects";
+
+  const readLocal = () => {
+    try {
+      return JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  };
+  const writeLocal = (isLiked) => {
+    try {
+      const set = new Set(readLocal().map(String));
+      if (isLiked) set.add(String(id));
+      else set.delete(String(id));
+      localStorage.setItem(LS_KEY, JSON.stringify([...set]));
+    } catch {}
+  };
+
+  // the list endpoint doesn't carry like info, so load it per project
+  useEffect(() => {
+    if (!id) return;
+    let alive = true;
+    if (base.liked === false && readLocal().map(String).includes(String(id))) {
+      setLiked(true);
+    }
+    fetchProjectLikesApi(id)
+      .then((r) => {
+        if (!alive) return;
+        if (r.count !== undefined) setCount(r.count);
+        if (r.liked !== undefined) {
+          setLiked(r.liked);
+          writeLocal(r.liked);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line
+  }, [id]);
+
+  const toggle = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (busy || !id) return;
+    const prev = { liked, count };
+    setBusy(true);
+    setLiked(!liked);
+    setCount(Math.max(0, count + (liked ? -1 : 1)));
+    try {
+      const r = await toggleProjectLikeApi(id);
+      const nowLiked = r.liked !== undefined ? r.liked : !prev.liked;
+      setLiked(nowLiked);
+      writeLocal(nowLiked);
+      if (r.count !== undefined) setCount(r.count);
+    } catch (err) {
+      console.error("Like failed:", err);
+      setLiked(prev.liked);
+      setCount(prev.count);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={toggle}
+      aria-pressed={liked}
+      className={`group/like flex items-center gap-1.5 text-xs font-medium cursor-pointer transition-colors ${
+        liked ? "text-[#f91880]" : "text-stone-500 hover:text-[#f91880]"
+      } ${className}`}
+    >
+      <span className="p-1.5 -m-1.5 rounded-full group-hover/like:bg-[#f91880]/10 transition-colors">
+        <Heart size={16} className={liked ? "fill-[#f91880]" : ""} />
+      </span>
+      <span>{count}</span>
+    </button>
+  );
+}
+
+const starsOf = (p) => p.stars ?? p.star_count ?? p.likes_count ?? p.likes ?? 0;
+
 const Discover = () => {
-  const [projects, setProjects] = useState(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState([]);
   const [userProjects, setUserProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [activeCategory, setActiveCategory] = useState("All Trending");
   const [activeTab, setActiveTab] = useState("discover");
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({});
+  const [communities, setCommunities] = useState([]);
+  const [communitiesLoading, setCommunitiesLoading] = useState(true);
 
 
-  // Safely retrieve current user object and username
-  const userRaw = JSON.parse(localStorage.getItem("user") || "{}");
-  const user = userRaw.user || userRaw.data || userRaw;
-  
+  // Current user comes from the API (no token or user data kept in localStorage)
+  useEffect(() => {
+    api
+      .get("/api/auth/me")
+      .then((res) => setUser(res.data?.data || res.data?.user || res.data || {}))
+      .catch(() => {});
+  }, []);
+
   const navigate = useNavigate();
   const openProject = (p) => {
     const slug = p.slug || p._slug;
@@ -90,40 +214,65 @@ const Discover = () => {
     "Crypto",
   ];
 
-  const communities = [
-    {
-      id: "comm-1",
-      badge: "AI",
-      title: "Autonomous Agents Guild",
-      description:
-        "Weekly syncs, prompt engineering workshops, and open-source hackathons.",
-      members: "1,240 members",
-      threads: "42 active threads",
-    },
-    {
-      id: "comm-2",
-      badge: "HW",
-      title: "Hardware & Robotics Collective",
-      description:
-        "Sharing PCB designs, embedded rust code, and sensor integration tips.",
-      members: "850 members",
-      threads: "18 active threads",
-    },
-  ];
+  // Communities for the "Active Builder Communities" section
+  useEffect(() => {
+    api
+      .get("/api/communities")
+      .then((res) => {
+        const body = res.data?.data ?? res.data;
+        const list = Array.isArray(body)
+          ? body
+          : body?.communities || body?.items || [];
+        setCommunities(
+          list
+            .map(toCommunity)
+            .sort((a, b) => b.members - a.members)
+            .slice(0, 4),
+        );
+      })
+      .catch((err) =>
+        console.error("Failed to load communities:", err.response?.status),
+      )
+      .finally(() => setCommunitiesLoading(false));
+  }, []);
+
+  const toggleJoin = async (community) => {
+    const wasJoined = community.joined;
+    try {
+      await api.post(
+        `/api/communities/${community.id}/${wasJoined ? "leave" : "join"}`,
+      );
+      setCommunities((prev) =>
+        prev.map((c) =>
+          c.id === community.id
+            ? {
+                ...c,
+                joined: !wasJoined,
+                members: Math.max(0, c.members + (wasJoined ? -1 : 1)),
+              }
+            : c,
+        ),
+      );
+    } catch (err) {
+      // 409 = already a member: just fix the button
+      if (err.response?.status === 409) {
+        setCommunities((prev) =>
+          prev.map((c) => (c.id === community.id ? { ...c, joined: true } : c)),
+        );
+      } else {
+        console.error("join/leave failed:", err.response?.status, err.response?.data);
+      }
+    }
+  };
 
   // 1. Fetch Discovery Hub Projects
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const res = await api.get("/api/projects");
+        const res = await api.get("/api/projects", { params: { page: 1, limit: 50 } });
 
-        const rawData = res.data;
-        const projectsArray = toArray(res.data);
-
-        if (projectsArray.length > 0) {
-          setProjects(projectsArray);
-        }
+        setProjects(toArray(res.data));
       } catch (err) {
         console.error("Failed to load global projects:", err);
       } finally {
@@ -167,6 +316,7 @@ const Discover = () => {
       formData.append("title", newProjectData.title || "");
       formData.append("tagline", newProjectData.tagline || "");
       formData.append("description", newProjectData.description || "");
+      formData.append("is_published", "true");
       formData.append("category", newProjectData.category || "Web Dev");
       formData.append("demo_url", newProjectData.demo_url || "");
       formData.append("github_url", newProjectData.github_url || "");
@@ -221,11 +371,13 @@ const Discover = () => {
         });
 
   const featuredProject =
-    projects.find((p) => p.isFeatured) || projects[0] || null;
+    projects.find((p) => p.isFeatured || p.is_featured) ||
+    [...projects].sort((a, b) => starsOf(b) - starsOf(a))[0] ||
+    null;
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1C1917] font-sans pb-16">
-      <main className="max-w-7xl mx-auto px-6 pt-6">
+    <div className="min-h-screen bg-white text-[#1C1917] font-sans pb-16">
+      <main className="px-4 sm:px-6 pb-6">
         {selectedProject ? (
           <ProjectComponents
             project={selectedProject}
@@ -234,74 +386,57 @@ const Discover = () => {
             onBack={() => setSelectedProject(null)}
           />
         ) : (
-          <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-stone-200/60">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[#A04622]"></span>
-                  <p className="text-[11px] font-bold tracking-wider uppercase text-[#A04622]">
-                    {activeTab === "my-projects"
-                      ? "WORKSPACE"
-                      : "DISCOVERY HUB"}
-                  </p>
-                </div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-stone-900">
-                  {activeTab === "my-projects"
-                    ? "My Created Projects"
-                    : "Explore Builder Projects"}
-                </h1>
-              </div>
-
-              {/* Actions Bar */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center bg-stone-100 p-1 rounded-2xl border border-stone-200/80 shadow-inner">
+          <div className="space-y-6">
+            {/* X-style tab bar */}
+            <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 -mt-0 bg-white/90 backdrop-blur border-b border-stone-200/70 flex items-stretch">
+              {[
+                { id: "discover", label: "Discover" },
+                { id: "my-projects", label: "My Projects", count: userProjects.length },
+              ].map((t) => {
+                const active = activeTab === t.id;
+                return (
                   <button
-                    onClick={() => setActiveTab("discover")}
-                    className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                      activeTab === "discover"
-                        ? "bg-white text-stone-900 shadow-sm border border-stone-200/50"
-                        : "text-stone-500 hover:text-stone-800"
+                    key={t.id}
+                    type="button"
+                    onClick={() => setActiveTab(t.id)}
+                    className={`relative flex-1 py-3.5 text-[15px] cursor-pointer hover:bg-stone-50 transition-colors ${
+                      active ? "font-bold text-stone-900" : "font-medium text-stone-500"
                     }`}
                   >
-                    Discover
+                    {t.label}
+                    {t.count > 0 && (
+                      <span className="ml-1.5 text-[11px] bg-stone-200/70 text-stone-700 rounded-full px-1.5 py-0.5 align-middle">
+                        {t.count}
+                      </span>
+                    )}
+                    {active && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-14 rounded-full bg-[#A04622]" />
+                    )}
                   </button>
-                  <button
-                    onClick={() => setActiveTab("my-projects")}
-                    className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-150 flex items-center gap-2 cursor-pointer ${
-                      activeTab === "my-projects"
-                        ? "bg-white text-stone-900 shadow-sm border border-stone-200/50"
-                        : "text-stone-500 hover:text-stone-800"
-                    }`}
-                  >
-                    <Folder
-                      size={14}
-                      className={
-                        activeTab === "my-projects"
-                          ? "text-[#A04622]"
-                          : "text-stone-400"
-                      }
-                    />
-                    <span>My Projects</span>
-                    <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-stone-200/70 text-[10px] text-stone-700">
-                      {userProjects.length}
-                    </span>
-                  </button>
-                </div>
+                );
+              })}
+              <button
+                onClick={() => setIsSubmitModalOpen(true)}
+                className="m-2 flex items-center gap-1.5 bg-[#A04622] hover:bg-[#8A3A1B] text-white px-4 rounded-full text-sm font-bold cursor-pointer active:scale-95 transition shrink-0"
+              >
+                <Plus size={16} />
+                <span className="max-[510px]:hidden">Post Project</span>
+              </button>
+            </div>
 
-                <button
-                  onClick={() => setIsSubmitModalOpen(true)}
-                  className="flex items-center gap-2 bg-[#A04622] hover:bg-[#8A3A1B] text-white px-4 py-2.5 rounded-2xl text-xs font-semibold cursor-pointer shadow-sm hover:shadow transition-all active:scale-95 shrink-0"
-                >
-                  <Plus size={16} />
-                  <span>Post Project</span>
-                </button>
-              </div>
+            <div className="space-y-1">
+              <p className="text-[11px] font-bold tracking-wider uppercase text-[#A04622]">
+                {activeTab === "my-projects" ? "Workspace" : "Discovery hub"}
+              </p>
+              <h1 className="text-xl font-extrabold tracking-tight text-stone-900">
+                {activeTab === "my-projects" ? "My Created Projects" : "Explore Builder Projects"}
+              </h1>
             </div>
 
             {/* FEATURED SPOTLIGHT */}
             {activeTab === "discover" && featuredProject && (
-              <div className="bg-white rounded-3xl p-6 border border-stone-200/80 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                <div className="lg:col-span-7 relative group overflow-hidden rounded-2xl h-64 bg-stone-900">
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/80 grid grid-cols-1 xl:grid-cols-12 gap-5 items-center">
+                <div className="xl:col-span-7 relative group overflow-hidden rounded-2xl h-52 sm:h-64 bg-stone-900">
                   <span className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-white text-[10px] font-semibold px-2.5 py-1 rounded-md z-10">
                     Featured Spotlight
                   </span>
@@ -316,14 +451,14 @@ const Discover = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="lg:col-span-5 space-y-4">
+                <div className="xl:col-span-5 space-y-4">
                   <div className="flex items-center gap-2 text-[11px] text-stone-400 font-medium">
                     <span className="bg-stone-100 text-stone-700 font-semibold px-2 py-0.5 rounded-md">
                       {featuredProject.category || featuredProject.categoryName || featuredProject.category_name || "General"}
                     </span>
                     <span>•</span>
                     <span>
-                      {featuredProject.updatedAt || "Recently updated"}
+                      {timeAgo(featuredProject.updated_at || featuredProject.updatedAt)}
                     </span>
                   </div>
 
@@ -341,10 +476,7 @@ const Discover = () => {
 
                   <div className="flex items-center gap-4 text-xs text-stone-500 pt-1">
                     <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1 font-medium">
-                        <Star size={13} className="text-stone-400" />{" "}
-                        {featuredProject.stars || 0}
-                      </span>
+                      <LikeButton key={featuredProject._id || featuredProject.id} project={featuredProject} />
                     </div>
                   </div>
 
@@ -413,7 +545,9 @@ const Discover = () => {
                     <p className="text-xs text-stone-500 max-w-sm">
                       {activeTab === "my-projects"
                         ? "You haven't submitted any projects yet. Click 'Post Project' above to publish your first work."
-                        : "No projects were found matching this filter category."}
+                        : projects.length === 0
+                          ? "No projects have been posted yet. Be the first to post one."
+                          : "No projects were found matching this filter category."}
                     </p>
                   </div>
                   {activeTab === "my-projects" && (
@@ -426,15 +560,15 @@ const Discover = () => {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {displayedProjects.map((project) => (
                     <div
                       key={project._id || project.id}
                       onClick={() => openProject(project)}
-                      className="bg-white rounded-2xl border border-stone-200/80 shadow-sm p-4 space-y-3 cursor-pointer hover:border-stone-300 transition-all flex flex-col justify-between group"
+                      className="bg-white rounded-2xl border border-stone-200 p-4 space-y-3 cursor-pointer hover:bg-stone-50 hover:border-stone-300 transition-colors flex flex-col justify-between group"
                     >
                       <div className="space-y-3">
-                        <div className="h-36 bg-stone-100 rounded-xl overflow-hidden relative">
+                        <div className="h-40 bg-stone-100 rounded-xl overflow-hidden relative border border-stone-200">
                           <img
                             src={
                               project.cover_image_url ||
@@ -450,7 +584,7 @@ const Discover = () => {
                           <span className="bg-stone-100 text-stone-700 font-semibold px-2 py-0.5 rounded-md text-[10px]">
                             {project.category || "General"}
                           </span>
-                          <span>{project.version || "v1.0.0"}</span>
+                          <span>{project.version || ""}</span>
                         </div>
                         <div>
                           <h4 className="font-bold text-stone-900 text-sm group-hover:text-[#A04622] transition-colors">
@@ -464,14 +598,12 @@ const Discover = () => {
                         </div>
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-stone-400 pt-3 border-t border-stone-100">
+                        <LikeButton project={project} />
                         <span className="flex items-center gap-1">
-                          <Star size={13} /> {project.stars || 0}
+                          <GitFork size={13} /> {project.forks_count ?? project.forks ?? 0} forks
                         </span>
                         <span className="flex items-center gap-1">
-                          <GitFork size={13} /> {project.forks || 0} forks
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle size={13} /> {project.comments || 0}
+                          <MessageCircle size={13} /> {project.comments_count ?? project.comments ?? 0}
                         </span>
                       </div>
                     </div>
@@ -486,38 +618,67 @@ const Discover = () => {
                   <h3 className="text-base font-bold text-stone-900">
                     Active Builder Communities
                   </h3>
-                  <button className="text-xs font-semibold text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer">
+                  <button
+                    onClick={() => navigate("/communities")}
+                    className="text-xs font-semibold text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer"
+                  >
                     Browse all <ArrowRight size={13} />
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {communities.map((comm) => (
-                    <div
-                      key={comm.id}
-                      className="bg-white rounded-2xl border border-stone-200/80 p-5 flex items-center justify-between gap-4 shadow-sm"
-                    >
-                      <div className="flex items-start gap-3.5">
-                        <div className="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center font-bold text-stone-700 text-xs shrink-0">
-                          {comm.badge}
+                {communitiesLoading ? (
+                  <div className="flex justify-center py-10 bg-white rounded-2xl border border-stone-200/80">
+                    <Loader2 className="animate-spin text-[#A04622]" size={22} />
+                  </div>
+                ) : communities.length === 0 ? (
+                  <div className="py-10 text-center text-xs text-stone-500 bg-white rounded-2xl border border-stone-200/80">
+                    No communities yet.{" "}
+                    <Link to="/communities/create" className="font-semibold text-[#A04622] hover:underline">
+                      Create one
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    {communities.map((comm) => (
+                      <div
+                        key={comm.id}
+                        className="bg-white rounded-2xl border border-stone-200/80 p-5 flex items-center justify-between gap-4 shadow-sm"
+                      >
+                        <div className="flex items-start gap-3.5 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center font-bold text-stone-700 text-xs shrink-0">
+                            {comm.badge}
+                          </div>
+                          <div className="space-y-1 min-w-0">
+                            <h4 className="font-bold text-stone-900 text-xs">
+                              {comm.slug ? (
+                                <Link to={`/communities/${comm.slug}`} className="hover:underline">
+                                  {comm.name}
+                                </Link>
+                              ) : (
+                                comm.name
+                              )}
+                            </h4>
+                            <p className="text-xs text-stone-500 max-w-xs line-clamp-2">
+                              {comm.description}
+                            </p>
+                            <p className="text-[11px] text-stone-400">
+                              {comm.members.toLocaleString()} {comm.members === 1 ? "builder" : "builders"}
+                            </p>
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <h4 className="font-bold text-stone-900 text-xs">
-                            {comm.title}
-                          </h4>
-                          <p className="text-xs text-stone-500 max-w-xs">
-                            {comm.description}
-                          </p>
-                          <p className="text-[11px] text-stone-400">
-                            {comm.members} • {comm.threads}
-                          </p>
-                        </div>
+                        <button
+                          onClick={() => toggleJoin(comm)}
+                          className={`text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer shrink-0 ${
+                            comm.joined
+                              ? "bg-white border border-stone-200 text-stone-600 hover:bg-stone-50"
+                              : "bg-stone-100 hover:bg-stone-200 text-stone-800"
+                          }`}
+                        >
+                          {comm.joined ? "Joined" : "Join"}
+                        </button>
                       </div>
-                      <button className="bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer">
-                        Join
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -99,6 +99,69 @@ const ProjectDetail = () => {
       cancelled = true;
     };
   }, [project, currentUser, slug]);
+  // author lookup: the project response may only carry an id
+  const [fetchedAuthor, setFetchedAuthor] = useState(null);
+  useEffect(() => {
+    setFetchedAuthor(null);
+    if (!project) return;
+    console.log("PROJECT DETAIL RESPONSE:", project);
+    if (typeof project.author === "object" && project.author) return;
+    const ref =
+      project.author_username ||
+      project.username ||
+      project.author_id ||
+      project.user_id ||
+      project.owner_id ||
+      project.created_by ||
+      project.userId ||
+      (typeof project.author === "string" ? project.author : "") ||
+      (typeof project.user === "string" ? project.user : "");
+    if (!ref) {
+      // detail response has no author info: borrow it from the list response
+      let gone = false;
+      api
+        .get("/api/projects", { params: { page: 1, limit: 50 } })
+        .then((res) => {
+          const body = res.data?.data ?? res.data;
+          const list = Array.isArray(body) ? body : body?.projects || body?.items || [];
+          const m = list.find((p) => String(p.id || p._id) === String(project.id || project._id));
+          if (gone || !m) return;
+          console.log("LIST ITEM FOR THIS PROJECT:", m);
+          const o = typeof m.author === "object" && m.author ? m.author : m;
+          const name = o.full_name || o.author_name || o.name || o.username;
+          const avatar = o.avatar_url || o.author_avatar || o.avatar;
+          if (name || avatar)
+            setFetchedAuthor({
+              id: o.id && o !== m ? o.id : m.user_id || m.author_id,
+              username: o.username || o.author_username,
+              full_name: name,
+              avatar_url: avatar,
+            });
+        })
+        .catch(() => {});
+      return () => {
+        gone = true;
+      };
+    }
+    let cancelled = false;
+    const toAuthor = (u) =>
+      u && {
+        id: u.id || u._id || ref,
+        username: u.username,
+        full_name: u.full_name || u.name,
+        avatar_url: u.avatar_url || u.avatar || u.profile_picture,
+      };
+    api
+      .get(`/api/users/${ref}`)
+      .then((res) => {
+        const u = res.data?.data?.user || res.data?.data || res.data?.user || res.data;
+        if (!cancelled && u && (u.username || u.full_name)) setFetchedAuthor(toAuthor(u));
+      })
+      .catch((err) => console.error("author lookup failed:", err.response?.status));
+    return () => {
+      cancelled = true;
+    };
+  }, [project]);
   const goBack = () =>
     window.history.length > 1 ? navigate(-1) : navigate("/discover");
   const projectWithAuthor = useMemo(() => {
@@ -110,7 +173,9 @@ const ProjectDetail = () => {
     project.authorName ||
     project.username;
 
-  if (hasAuthor || !isAuthor) return project;
+  if (hasAuthor) return project;
+  if (fetchedAuthor) return { ...project, author: fetchedAuthor };
+  if (!isAuthor) return project;
 
   return {
     ...project,
@@ -121,7 +186,7 @@ const ProjectDetail = () => {
       avatar_url: currentUser?.avatar_url || currentUser?.avatar,
     },
   };
-}, [project, isAuthor, currentUser]);
+}, [project, isAuthor, currentUser, fetchedAuthor]);
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto px-4 py-6">

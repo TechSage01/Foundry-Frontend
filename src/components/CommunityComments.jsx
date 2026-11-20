@@ -27,7 +27,7 @@ const buildTree = (list) => {
   return roots;
 };
 function CommentItem({ comment, depth, onReply, replyingTo, children }) {
-  const u = author(comments);
+  const u = author(comment);
   return (
     <div style={{ marginLeft: depth ? 16 : 0 }} className="space-y-1">
       <div className="rounded-xl bg-white border border-stone-200 px-3 py-2">
@@ -65,9 +65,7 @@ export default function CommunityComments({
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
-  const [newComment, setNewComment] = useState("");
   const [sending, setSending] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const load = async () => {
@@ -98,7 +96,7 @@ export default function CommunityComments({
     setSending(true);
     setError("");
     try {
-      await createPostCommentApi(communityId, postId, {
+      await createPostsCommentApi(communityId, postId, {
         content: text.trim(),
         parent_id: replyingTo,
       });

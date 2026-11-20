@@ -30,7 +30,7 @@ export const createPostApi = async (formData) => {
   // if (!res.ok) throw new Error("Failed to create post");
   // return res.json();
 };
-export const updatePostApi = async (id, postData) => {
+export const updatePostApi = async (id, formData) => {
   const res = await api.patch(`/api/posts/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
@@ -68,6 +68,10 @@ export const deleteCommentApi = async (postId, commentId) => {
   const res = await api.delete(`/api/posts/${postId}/comments/${commentId}`);
   return res.data?.data || res.data?.comment || res.data;
 }
+export const toggleCommentLikeApi = async (postId, commentId) => {
+  const res = await api.post(`/api/posts/${postId}/comments/${commentId}/likes`);
+  return res.data?.data || res.data;
+};
 export const setBookmarkApi = async (postId, isBookmarking) => {
   const res = isBookmarking
     ? await api.post(`/api/posts/${postId}/bookmarks`)
@@ -79,8 +83,9 @@ export const fetchBookmarksApi = async () => {
    const res = await api.get(`/api/posts/me/bookmarks`);
   const data = res.data?.data || res.data?.posts || res.data;
   return Array.isArray(data) ? data : [];
- } catch {
-  if(err.response?.status === 404) return [];
+ } catch (err) {
+  if (err.response?.status === 404) return [];
+  throw err;
  }
 }
 
