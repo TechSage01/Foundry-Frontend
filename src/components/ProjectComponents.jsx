@@ -786,6 +786,10 @@ export const ProjectComponents = ({
                 <h2 className="text-sm font-bold text-stone-900">
                   Interactive Journey & Roadmap
                 </h2>
+                <p className="text-[10px] text-stone-400">
+                  debug: projectId={String(projectId)} isAuthor=
+                  {String(isAuthor)} phases={phases.length}
+                </p>
 
                 {/* RESTRICTED: Only Author can add Roadmap Phases */}
                 {isAuthor && (

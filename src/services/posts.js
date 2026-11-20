@@ -120,7 +120,9 @@ export const uploadAvatarApi = async (file, user) => {
   return m?.avatar_url || m?.avatar || URL.createObjectURL(file);
 }
 
-export const toggleRepostApi = async (postId) => {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/repost`, { method: "POST" });
-  return res.json();
+export const setRepostApi = async (postId, isReposting) => {
+  const res = isReposting
+    ? await api.post(`/api/posts/${postId}/repost`)
+    : await api.delete(`/api/posts/${postId}/repost`);
+  return res.data?.data || res.data;
 };
