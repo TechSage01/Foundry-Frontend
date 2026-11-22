@@ -46,7 +46,7 @@ export default function App() {
         <Route path="/auth/callback" element={<OAuthCallback />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/opportunities" element={<OpportunitiesLandingPage />} />
+        <Route path="/opportunity" element={<OpportunitiesLandingPage />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoutes />}>
@@ -80,6 +80,7 @@ export default function App() {
 
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:username" element={<AuthorProfile />} />
+          <Route path="/opportunities" element={<Opportunities />} />
           <Route
             path="/opportunities/create"
             element={<CreateOpportunity />}
@@ -90,8 +91,6 @@ export default function App() {
           <Route path="/communities" element={<Communities />} />
           <Route path="/communities/create" element={<CreateCommunity />} />
           <Route path="/communities/:slug" element={<CommunityDetail />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/messages" element={<Messages />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/messages" element={<Messages />} />
 

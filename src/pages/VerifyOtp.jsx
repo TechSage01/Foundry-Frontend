@@ -80,13 +80,17 @@ const VerifyOtp = () => {
       setLoading(true);
       setError("");
 
-      await verifyOtpApi(email, code);
+      const response = await verifyOtpApi(email, code);
 
       sessionStorage.removeItem("foundryOtpEmail");
 
-      navigate("/auth/callback", {
-        replace: true,
-      });
+      const redirectUrl = response?.redirectUrl;
+
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        navigate("/auth/callback", { replace: true });
+      }
     } catch (err) {
       const data = err.response?.data;
 
@@ -110,7 +114,7 @@ const VerifyOtp = () => {
   const formatTimer = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    return `${mins}:${secs < 5 ? "0" : ""}${secs}`;
   };
 
   return (
@@ -315,7 +319,7 @@ const VerifyOtp = () => {
             <p className="text-[11px] text-stone-500 leading-relaxed">
               Verification codes expire in{" "}
               <strong className="text-stone-800 font-semibold">
-                10 minutes
+                5 minutes
               </strong>
               . Foundry uses end-to-end encrypted identity safeguards to
               guarantee exclusive builder ownership.
